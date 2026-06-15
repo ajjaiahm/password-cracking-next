@@ -82,7 +82,7 @@ export function AccountSetupPage() {
       const tFromUrl = searchParams.get('t') || '';
       await completeAccountSetup(emailFromUrl, password, username.trim(), uidFromUrl, tFromUrl);
       toast.success('Account created successfully! 🎉');
-      navigate('/login');
+      window.location.replace('/#/login');
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
       toast.error(err.message || 'Setup failed.');
