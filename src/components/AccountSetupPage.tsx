@@ -21,7 +21,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function AccountSetupPage() {
-  const { completeAccountSetup, checkNameUnique, isMockMode } = useAuth();
+  const { completeAccountSetup, checkNameUnique, checkSetupLinkValid, isMockMode } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -37,6 +37,8 @@ export function AccountSetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [isCheckingLink, setIsCheckingLink] = useState(true);
 
   // Username uniqueness check (debounced)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'taken' | 'available'>('idle');
@@ -52,6 +54,19 @@ export function AccountSetupPage() {
       setUsernameStatus(isUnique ? 'available' : 'taken');
     });
   }, [debouncedUsername, checkNameUnique]);
+
+  // Check if link is still valid
+  useEffect(() => {
+    const uidFromUrl = searchParams.get('uid');
+    if (!uidFromUrl) {
+      setIsCheckingLink(false);
+      return;
+    }
+    checkSetupLinkValid(uidFromUrl).then((isValid) => {
+      setIsExpired(!isValid);
+      setIsCheckingLink(false);
+    });
+  }, [searchParams, checkSetupLinkValid]);
 
   // Password strength checks
   const checks = {
@@ -91,21 +106,32 @@ export function AccountSetupPage() {
     }
   };
 
-  // If email is missing from URL, something went wrong
-  if (!emailFromUrl) {
+  // If email is missing from URL or link is expired
+  if (!emailFromUrl || isExpired) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-100 p-4">
         <div className="text-center space-y-4">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
           <h1 className="font-mono font-bold text-zinc-100">Invalid Setup Link</h1>
-          <p className="text-xs text-zinc-500 font-mono">This link is invalid or has expired. Please register again.</p>
-          <button onClick={() => navigate('/signup')}
-            className="px-4 py-2 bg-zinc-100 text-zinc-900 text-xs font-mono font-bold rounded">
-            Back to Register
-          </button>
+          <p className="text-xs text-zinc-500 font-mono">This link is invalid or has already been used. Please register again or log in.</p>
+          <div className="flex justify-center gap-4 mt-4">
+            <button onClick={() => navigate('/login')}
+              className="px-4 py-2 bg-zinc-100 text-zinc-900 text-xs font-mono font-bold rounded hover:bg-white transition-colors">
+              Go to Login
+            </button>
+            <button onClick={() => navigate('/signup')}
+              className="px-4 py-2 bg-zinc-900 border border-zinc-700 text-zinc-300 text-xs font-mono rounded hover:bg-zinc-800 transition-colors">
+              Register Again
+            </button>
+          </div>
         </div>
       </div>
     );
+  }
+
+  // Show nothing while checking link
+  if (isCheckingLink) {
+    return <div className="min-h-screen bg-zinc-950" />;
   }
 
   // Success screen

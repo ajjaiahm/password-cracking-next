@@ -23,12 +23,13 @@ import {
   Sparkles
 } from 'lucide-react';
 
-export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLeaderboard, openDailyChallenge }: { 
+export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLeaderboard, openDailyChallenge, onNavigate }: { 
   isMobileOpen: boolean, 
   setIsMobileOpen: (v: boolean) => void, 
   openDashboard: () => void,
   openLeaderboard: () => void,
-  openDailyChallenge: () => void
+  openDailyChallenge: () => void,
+  onNavigate?: () => void
 }) {
   const { data, isLabCompleted, isLabLocked, getRank } = useProgress();
   const { activeLabId, loadLab } = useLab();
@@ -121,7 +122,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLead
             <div key={track.id} className="space-y-0.5">
               <div className={`px-5 py-2 flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider border-l-2 ${trackActive ? 'border-cyan-600 bg-cyan-950/10 text-cyan-400' : 'border-transparent text-zinc-500'}`}>
                 {renderTrackIcon(track.icon)}
-                <span className="flex-1">{track.name}</span>
+                <span className="flex-1 truncate">{track.name}</span>
                 {trackCompleted && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
                 {nextLockedIdx === 0 && <Lock className="w-3 h-3 text-zinc-600" />}
               </div>
@@ -138,6 +139,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLead
                       disabled={isLocked}
                       onClick={() => {
                         loadLab(track.id, lab.id);
+                        if (onNavigate) onNavigate();
                         if (window.innerWidth < 768) setIsMobileOpen(false);
                       }}
                       className={`
@@ -153,7 +155,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLead
                       `}
                       style={isActive ? { borderLeftWidth: '2px' } : {}}
                     >
-                      <div className="flex items-center gap-2 truncate mr-2">
+                      <div className="flex items-center gap-2 truncate mr-2 flex-1 min-w-0">
                         <div className={`w-1 h-1 rounded-full shrink-0 ${
                           isCompleted ? 'bg-emerald-500' : isActive ? 'bg-cyan-400 animate-pulse' : isLocked ? 'bg-zinc-700' : 'bg-zinc-600'
                         }`} />

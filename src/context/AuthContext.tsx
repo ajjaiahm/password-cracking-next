@@ -34,7 +34,9 @@ interface AuthContextType {
   initiateEmailVerification: (email: string) => Promise<void>;
   // Step 2: after clicking the link, complete setup with username + password
   completeAccountSetup: (email: string, password: string, name: string, tempUid?: string, tempPwd?: string) => Promise<void>;
+  checkSetupLinkValid: (uid: string) => Promise<boolean>;
   checkNameUnique: (name: string) => Promise<boolean>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   saveOnboarding: (interest: string, experience: string) => Promise<void>;
@@ -161,6 +163,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     } catch {
       return true;
+    }
+  };
+
+  const checkSetupLinkValid = async (uid: string): Promise<boolean> => {
+    if (!uid) return false;
+    if (isMockMode) {
+      const storedUsers = localStorage.getItem('password_lab_mock_users');
+      const usersList = storedUsers ? JSON.parse(storedUsers) : [];
+      return !usersList.some((u: any) => u.uid === uid);
+    }
+    try {
+      const userRef = doc(db, 'users', uid);
+      const snap = await getDoc(userRef);
+      return !snap.exists(); // If it doesn't exist, link is still valid
+    } catch {
+      return true; // Fallback to let the form submission handle errors
     }
   };
 
@@ -354,7 +372,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading, isMockMode, login, initiateEmailVerification,
-      completeAccountSetup, checkNameUnique, logout, resetPassword, saveOnboarding
+      completeAccountSetup, checkSetupLinkValid, checkNameUnique, signup, logout, resetPassword, saveOnboarding
     }}>
       {children}
     </AuthContext.Provider>

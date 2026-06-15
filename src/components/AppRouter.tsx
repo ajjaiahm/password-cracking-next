@@ -178,13 +178,14 @@ function WorkspaceLayout() {
         {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
 
         {/* Sidebar — fixed on mobile, static on desktop */}
-        <div style={{ width: sidebarWidth }} className={`hidden md:block shrink-0 ${smoothClass}`}>
+        <div style={{ width: sidebarWidth }} className={`hidden md:block shrink-0 overflow-hidden ${smoothClass}`}>
           <Sidebar 
             isMobileOpen={isMobileOpen} 
             setIsMobileOpen={setIsMobileOpen} 
             openDashboard={() => setIsDashboardOpen(true)} 
             openLeaderboard={() => setIsLeaderboardOpen(true)}
             openDailyChallenge={() => setIsDailyChallengeOpen(true)}
+            onNavigate={() => setIsDailyChallengeOpen(false)}
           />
         </div>
         {/* Mobile sidebar always rendered (slides in/out via CSS) */}
@@ -195,6 +196,7 @@ function WorkspaceLayout() {
             openDashboard={() => setIsDashboardOpen(true)} 
             openLeaderboard={() => setIsLeaderboardOpen(true)}
             openDailyChallenge={() => setIsDailyChallengeOpen(true)}
+            onNavigate={() => setIsDailyChallengeOpen(false)}
           />
         </div>
 
