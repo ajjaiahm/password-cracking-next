@@ -1,26 +1,208 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ── Professional IDE Theme (LeetCode / Discord Style) ── */
+  
+  /* Core backgrounds */
+  --color-background: #1a1a1a;
+  --color-foreground: #eff2f6;
+  
+  /* Accent palette */
+  --color-accent-orange: #ffa116;
+  --color-accent-green: #2cbb5d;
+  --color-accent-red: #ef4743;
+  --color-accent-dim: #8c8c8c;
+  
+  /* Surface layers */
+  --color-bg-panel: rgba(40, 40, 40, 0.95);
+  --color-bg-card: #282828;
+  --color-bg-surface: #1e1e1e;
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+  --color-border-active: rgba(255, 161, 22, 0.4);
+  --color-terminal-bg: #141414;
+  
+  /* Glow effects */
+  --glow-accent: 0 0 10px rgba(255, 161, 22, 0.15);
+  
+  /* Fonts — use CSS variables injected by Next.js font loader */
+  --font-mono: var(--font-jetbrains, 'JetBrains Mono', 'Fira Code', 'Consolas', monospace);
+  --font-sans: var(--font-inter, 'Inter', system-ui, sans-serif);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Custom Scrollbar — Clean Dark Style */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3e3e3e;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  /* Box-sizing reset for all elements */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Enable smooth scrolling, prevent text size adjust on rotate */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-[var(--color-background)] text-[var(--color-foreground)] antialiased overflow-hidden;
+    font-family: var(--font-sans);
+    /* Support iOS safe areas (notch, home indicator) */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    /* Prevent pull-to-refresh and bounce on iOS */
+    overscroll-behavior: none;
+    /* Improve touch scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  ::selection {
+    background: rgba(88, 101, 242, 0.3);
+    color: #ffffff;
+  }
+
+  /* Ensure inputs and buttons inherit font properly on mobile */
+  input, button, textarea, select {
+    font-family: inherit;
+  }
+  
+  /* Make all tap targets at least 44px for accessibility */
+  button, a, [role="button"] {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Override min-height for flex/grid children that have explicit sizing */
+  .no-min-h button {
+    min-height: unset;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .glass-panel {
+    @apply bg-[var(--color-bg-panel)] backdrop-blur-md border border-[var(--color-border-glass)] shadow-xl;
+  }
+  
+  .glass-card {
+    @apply bg-[var(--color-bg-card)] border border-[var(--color-border-glass)] shadow-md transition-all duration-200 rounded-lg;
+  }
+  .glass-card:hover {
+    border-color: rgba(88, 101, 242, 0.3);
+    box-shadow: var(--glow-accent);
+  }
+  
+  .terminal-text {
+    @apply font-mono text-sm leading-relaxed;
+  }
+
+  /* Safe-area-aware paddings for iOS devices */
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+
+  /* Custom scrollbar shorthand */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #3e3e3e transparent;
+    -webkit-overflow-scrolling: touch;
+  }
 }
+
+/* Typing Indicator Animation */
+.typing-indicator span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background-color: #b5bac1;
+  border-radius: 50%;
+  margin: 0 1.5px;
+  animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1.1); opacity: 0.9; }
+}
+
+/* ── Responsive Workspace Layout Adjustments ── */
+
+/* On small screens, the right-panel (mentor + terminal) sits below main content */
+@media (max-width: 768px) {
+  /* Allow the main workspace to scroll vertically on mobile */
+  .workspace-mobile-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Stack panels vertically on mobile */
+  .right-panel-mobile {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: unset !important;
+    border-left: none !important;
+    border-top: 1px solid #27272a;
+    flex-direction: column;
+    height: auto;
+  }
+
+  /* Reduce font sizes slightly for dense content on small screens */
+  .font-mono {
+    font-size: clamp(10px, 2vw, 12px);
+  }
+
+  /* Snap the terminal to bottom on mobile */
+  .terminal-mobile {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+  }
+}
+
+/* ── Tablet breakpoint (768px–1024px) ── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Slightly narrower sidebar and right panel */
+  :root {
+    --sidebar-default-width: 220px;
+    --right-panel-default-width: 300px;
+  }
+}
+
+/* ── Touch device optimizations ── */
+@media (hover: none) and (pointer: coarse) {
+  /* Disable hover-only animations on touch */
+  .glass-card:hover {
+    border-color: var(--color-border-glass);
+    box-shadow: none;
+  }
+
+  /* Make resize handles invisible on touch (not useful) */
+  [data-resize-handle] {
+    display: none;
+  }
+}
+
