@@ -62,7 +62,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ResizeHandle({ onDrag, position }: { onDrag: (delta: number) => void; position: 'left' | 'right' }) {
+function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (delta: number) => void; onDragStart?: () => void; onDragEnd?: () => void; position: 'left' | 'right' }) {
   const dragging = useRef(false);
   const startX = useRef(0);
 
@@ -70,6 +70,7 @@ function ResizeHandle({ onDrag, position }: { onDrag: (delta: number) => void; p
     e.preventDefault();
     dragging.current = true;
     startX.current = e.clientX;
+    onDragStart?.();
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
@@ -82,6 +83,7 @@ function ResizeHandle({ onDrag, position }: { onDrag: (delta: number) => void; p
 
     const onMouseUp = () => {
       dragging.current = false;
+      onDragEnd?.();
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       document.removeEventListener('mousemove', onMouseMove);
@@ -90,7 +92,7 @@ function ResizeHandle({ onDrag, position }: { onDrag: (delta: number) => void; p
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  }, [onDrag, position]);
+  }, [onDrag, onDragStart, onDragEnd, position]);
 
   return (
     <div
@@ -108,20 +110,41 @@ function WorkspaceLayout() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isDailyChallengeOpen, setIsDailyChallengeOpen] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Track viewport width for responsive behavior
+  const [windowWidth, setWindowWidth] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth : 1200
+  );
+  const isMobile = windowWidth < 768;
 
   // Resizable panel widths (in px, persisted to localStorage)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     if (typeof window !== 'undefined') {
-      return parseInt(localStorage.getItem('pcl_sidebar_width') || '260', 10);
+      const saved = parseInt(localStorage.getItem('pcl_sidebar_width') || '260', 10);
+      return Math.min(saved, window.innerWidth * 0.35);
     }
     return 260;
   });
   const [rightPanelWidth, setRightPanelWidth] = useState(() => {
     if (typeof window !== 'undefined') {
-      return parseInt(localStorage.getItem('pcl_right_panel_width') || '340', 10);
+      const saved = parseInt(localStorage.getItem('pcl_right_panel_width') || '340', 10);
+      return Math.min(saved, Math.max(260, window.innerWidth * 0.4));
     }
     return 340;
   });
+
+  // Track window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      const ww = window.innerWidth;
+      setWindowWidth(ww);
+      setSidebarWidth(w => clamp(w, 180, Math.min(400, ww * 0.4)));
+      setRightPanelWidth(w => clamp(w, 260, Math.min(600, ww * 0.45)));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('pcl_sidebar_width', String(sidebarWidth));
@@ -131,7 +154,15 @@ function WorkspaceLayout() {
     localStorage.setItem('pcl_right_panel_width', String(rightPanelWidth));
   }, [rightPanelWidth]);
 
+  // Clear resizing flag after drag finishes
+  useEffect(() => {
+    if (!isResizing) return;
+    const timer = setTimeout(() => setIsResizing(false), 100);
+    return () => clearTimeout(timer);
+  }, [isResizing]);
+
   const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+  const smoothClass = isResizing ? '' : 'md:transition-[width] md:duration-200 md:ease-out';
 
   return (
     <LabProvider>
@@ -147,7 +178,7 @@ function WorkspaceLayout() {
         {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
 
         {/* Sidebar — fixed on mobile, static on desktop */}
-        <div style={{ width: sidebarWidth, minWidth: 180, maxWidth: 400 }} className="hidden md:block shrink-0">
+        <div style={{ width: sidebarWidth }} className={`hidden md:block shrink-0 ${smoothClass}`}>
           <Sidebar 
             isMobileOpen={isMobileOpen} 
             setIsMobileOpen={setIsMobileOpen} 
@@ -167,7 +198,12 @@ function WorkspaceLayout() {
           />
         </div>
 
-        <ResizeHandle onDrag={(delta) => setSidebarWidth(w => clamp(w + delta, 180, 400))} position="right" />
+        <ResizeHandle 
+          onDrag={(delta) => { setIsResizing(true); setSidebarWidth(w => clamp(w - delta, 180, 400)); }}
+          onDragStart={() => setIsResizing(true)}
+          onDragEnd={() => setIsResizing(false)}
+          position="right"
+        />
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 relative z-10 bg-transparent overflow-hidden">
@@ -207,7 +243,7 @@ function WorkspaceLayout() {
           </div>
 
           {/* Desktop + Mobile main content: lab viewer + right panel */}
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-transparent">
+          <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden bg-transparent">
             {/* Lab content — always full width on mobile, flex-1 on desktop */}
             <div className="flex-1 min-h-0 overflow-hidden">
               <LabViewer 
@@ -216,12 +252,17 @@ function WorkspaceLayout() {
               />
             </div>
 
-            <ResizeHandle onDrag={(delta) => setRightPanelWidth(w => clamp(w - delta, 260, 600))} position="left" />
+            <ResizeHandle 
+              onDrag={(delta) => { setIsResizing(true); setRightPanelWidth(w => clamp(w - delta, 260, 600)); }}
+              onDragStart={() => setIsResizing(true)}
+              onDragEnd={() => setIsResizing(false)}
+              position="left"
+            />
 
             {/* Right panel: Mentor + Terminal — stacks below on mobile */}
             <div 
-              style={{ width: typeof window !== 'undefined' && window.innerWidth < 768 ? '100%' : rightPanelWidth }}
-              className="right-panel-mobile md:shrink-0 border-t md:border-t-0 md:border-l border-zinc-800 flex flex-col bg-zinc-900/60"
+              style={{ width: isMobile ? '100%' : rightPanelWidth }}
+              className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-zinc-800 flex flex-col bg-zinc-900/60 ${smoothClass}`}
             >
               <VirtualMentor />
               <TerminalSimulator />

@@ -81,8 +81,8 @@ export function AccountSetupPage() {
       const uidFromUrl = searchParams.get('uid') || '';
       const tFromUrl = searchParams.get('t') || '';
       await completeAccountSetup(emailFromUrl, password, username.trim(), uidFromUrl, tFromUrl);
-      setDone(true);
       toast.success('Account created successfully! 🎉');
+      window.location.href = 'https://passwdcracking.vercel.app/#/login';
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
       toast.error(err.message || 'Setup failed.');
@@ -141,7 +141,7 @@ export function AccountSetupPage() {
             </div>
           </div>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => window.location.href = 'https://passwdcracking.vercel.app/#/login'}
             className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-100 hover:bg-white text-zinc-900 font-semibold text-xs uppercase tracking-wider rounded transition-all"
           >
             Go to Login Console <ArrowRight className="w-4 h-4" />

@@ -73,7 +73,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLead
 
       <aside className={`
         fixed md:static inset-y-0 left-0 z-50
-        w-72 bg-zinc-900/95 border-r border-zinc-800
+        w-full bg-zinc-900/95 border-r border-zinc-800
         transform transition-transform duration-200 ease-in-out
         flex flex-col h-screen font-sans
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}

@@ -38,6 +38,28 @@ export function VirtualMentor() {
   ];
   let modelIndex = 0;
 
+  function isQuotaError(err: any): boolean {
+    const msg = (err?.message || '').toLowerCase();
+    const status = err?.status || err?.code || 0;
+    return status === 429 ||
+      msg.includes('429') ||
+      msg.includes('quota') ||
+      msg.includes('rate limit') ||
+      msg.includes('resource exhausted') ||
+      msg.includes('exceeded');
+  }
+
+  function isOverloadError(err: any): boolean {
+    const msg = (err?.message || '').toLowerCase();
+    const status = err?.status || err?.code || 0;
+    return status === 503 || status === 500 || msg.includes('503') || msg.includes('500') || msg.includes('overload');
+  }
+
+  function isBadKeyError(err: any): boolean {
+    const msg = (err?.message || '').toLowerCase();
+    return msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('api key not found');
+  }
+
   async function callWithRetry(prompt: string, maxRetries = 3): Promise<string> {
     for (let attempt = 0; attempt < maxRetries * models.length; attempt++) {
       const mi = attempt % models.length;
@@ -46,12 +68,8 @@ export function VirtualMentor() {
         const result = await m.generateContent(prompt);
         return result.response.text();
       } catch (err: any) {
-        const isOverload = err?.message?.includes('503') || err?.message?.includes('500') || err?.status === 503;
-        const isBadKey = err?.message?.includes('API_KEY_INVALID') || err?.message?.includes('API key not valid');
-        const isQuota = err?.message?.includes('429') || err?.message?.includes('quota');
-        const isMissingModel = err?.message?.includes('not found') || err?.message?.includes('not supported') || err?.message?.includes('404');
-        if (isBadKey) throw new Error('API_KEY_INVALID');
-        if (!isOverload && !isQuota && !isMissingModel) throw err;
+        if (isBadKeyError(err)) throw new Error('API_KEY_INVALID');
+        if (!isOverloadError(err) && !isQuotaError(err)) throw err;
         if (attempt >= maxRetries * models.length - 1) throw err;
         modelIndex = (mi + 1) % models.length;
         const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
@@ -207,12 +225,12 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
       window.dispatchEvent(new CustomEvent('daily-challenge-ready'));
     } catch (error: any) {
       console.error("Challenge generation failed:", error);
-      const msg = error?.message?.includes('API_KEY_INVALID')
+      const msg = isBadKeyError(error)
         ? 'API key is invalid. Set a valid `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`. Get one at https://aistudio.google.com/apikey'
-        : error?.message?.includes('503')
-        ? 'The AI service is temporarily overloaded (503). Please try generating the challenge again in a moment.'
-        : error?.message?.includes('429')
-        ? 'API rate limit reached. Please wait before generating another challenge.'
+        : isQuotaError(error)
+        ? 'Gemini API quota exceeded. The free tier has daily limits — wait until the quota resets or use a key with higher limits.'
+        : isOverloadError(error)
+        ? 'The AI service is temporarily overloaded. Please try generating the challenge again in a moment.'
         : 'Failed to generate challenge. Please try again later.';
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
@@ -275,12 +293,12 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
       }]);
     } catch (error: any) {
       console.error("Gemini API Error:", error);
-      const msg = error?.message?.includes('API_KEY_INVALID')
-        ? 'API key is invalid. Please set a valid `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`. Get one at https://aistudio.google.com/apikey'
-        : error?.message?.includes('503')
-        ? 'The AI service is temporarily overloaded (503). Please try your question again in a moment.'
-        : error?.message?.includes('429')
-        ? 'API rate limit reached. Please wait a moment before sending another request.'
+      const msg = isBadKeyError(error)
+        ? 'API key is invalid. Set a valid `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`. Get one at https://aistudio.google.com/apikey'
+        : isQuotaError(error)
+        ? 'Gemini API quota exceeded. The free tier has daily limits — wait until the quota resets or use a key with higher limits.'
+        : isOverloadError(error)
+        ? 'The AI service is temporarily overloaded. Please try your question again in a moment.'
         : 'I am unable to connect to my reasoning servers at the moment. Please try again later.';
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
