@@ -16,6 +16,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Record<string, { ok: boolean; text: string } | null>>({});
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
+  const [verifying, setVerifying] = useState<Record<string, boolean>>({});
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
   const isFirstChallenge = (data.challengesSolved || 0) === 0;
@@ -42,7 +43,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
     return () => window.removeEventListener('daily-challenge-ready', handler as EventListener);
   }, []);
 
-  const getTypeChallenge = (type: string) => data.dailyChallenges[type] || null;
+  const getTypeChallenge = (type: string) => getDailyChallenge(type);
 
   const handleGenerate = (type: string) => {
     if (generating[type]) return;
@@ -56,11 +57,42 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
   const handleVerify = (type: string) => {
     const dc = getTypeChallenge(type);
     if (!dc || dc.completed) return;
-    const isCorrect = (answers[type] || '').trim().toLowerCase() === dc.correctAnswer.trim().toLowerCase();
-    setFeedback(prev => ({ ...prev, [type]: { ok: isCorrect, text: isCorrect ? 'Access granted. Credentials verified.' : 'Invalid response. Check the hash and try again.' } }));
-    if (isCorrect) {
-      completeDailyChallenge(type);
-    }
+    
+    const submittedRaw = (answers[type] || '').trim();
+    if (!submittedRaw) return;
+
+    const requestId = `verify_${type}_${Date.now()}`;
+    setVerifying(prev => ({ ...prev, [type]: true }));
+    setFeedback(prev => ({ ...prev, [type]: null }));
+
+    // Listen for AI result
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail.requestId !== requestId) return;
+      window.removeEventListener('challenge-verify-result', handler);
+
+      const isCorrect = !!detail.isCorrect;
+      setFeedback(prev => ({
+        ...prev,
+        [type]: { ok: isCorrect, text: detail.feedback || (isCorrect ? 'Access granted. Credentials verified.' : 'Invalid response. Check the hash and try again.') }
+      }));
+      setVerifying(prev => ({ ...prev, [type]: false }));
+      if (isCorrect) {
+        completeDailyChallenge(type);
+      }
+    };
+    window.addEventListener('challenge-verify-result', handler);
+
+    // Dispatch verification request to VirtualMentor
+    window.dispatchEvent(new CustomEvent('challenge-verify-request', {
+      detail: {
+        requestId,
+        type,
+        userAnswer: submittedRaw,
+        correctAnswer: dc.correctAnswer,
+        scenario: dc.scenario
+      }
+    }));
   };
 
   const handleBuyHint = async (type: string) => {
@@ -112,7 +144,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
             const isCompleted = hasChallenge && challenge!.completed;
             const isActive = selectedType === ct.id;
             const isGenerating = generating[ct.id];
-            const canStart = !hasChallenge || isCompleted;
+            const canStart = !hasChallenge;
 
             return (
               <button
@@ -387,11 +419,17 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
                 />
                 <button
                   onClick={() => handleVerify(selectedType!)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 text-xs px-5 py-2 rounded font-mono transition-colors"
+                  disabled={verifying[selectedType!] || !answers[selectedType!]?.trim()}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 text-xs px-5 py-2 rounded font-mono transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  Verify
+                  {verifying[selectedType!] ? <><Loader2 className="w-3 h-3 animate-spin" /> Verifying...</> : 'Verify'}
                 </button>
               </div>
+              <p className="text-[10.5px] text-zinc-500 font-mono leading-normal mt-1 bg-zinc-950/30 p-2 rounded border border-zinc-900">
+                <strong>Format Guide:</strong> Submit the cracked plaintext password. You can also submit in <code>hash:password</code> format — AI will extract the password.
+                <br />
+                <span className="text-[9.5px] text-zinc-600">Answers accepted in any language. AI validates your response.</span>
+              </p>
             </div>
 
             {/* Feedback */}

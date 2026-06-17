@@ -282,8 +282,6 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const getDailyChallengeDayStart = (): number => {
     const today = getTodayMidnight();
     if (data.dailyChallengeDay < today) {
-      // New day — reset challenges
-      saveData({ ...data, dailyChallenges: {}, dailyChallengeDay: today });
       return today;
     }
     return data.dailyChallengeDay;
@@ -292,7 +290,6 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const getDailyChallenge = (type: string): DailyChallengeData | null => {
     const today = getTodayMidnight();
     if (data.dailyChallengeDay < today) {
-      saveData({ ...data, dailyChallenges: {}, dailyChallengeDay: today });
       return null;
     }
     return data.dailyChallenges[type] || null;
@@ -300,10 +297,14 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   const setDailyChallenge = async (challenge: DailyChallengeData) => {
     const today = getTodayMidnight();
+    let currentChallenges = data.dailyChallenges;
+    if (data.dailyChallengeDay < today) {
+      currentChallenges = {};
+    }
     const newData = {
       ...data,
       dailyChallenges: {
-        ...data.dailyChallenges,
+        ...currentChallenges,
         [challenge.type]: challenge,
       },
       dailyChallengeDay: today,

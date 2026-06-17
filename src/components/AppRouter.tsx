@@ -247,7 +247,7 @@ function WorkspaceLayout() {
           {/* Desktop + Mobile main content: lab viewer + right panel */}
           <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden bg-transparent">
             {/* Lab content — always full width on mobile, flex-1 on desktop */}
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col">
               <LabViewer 
                 showDailyChallenge={isDailyChallengeOpen}
                 onCloseDailyChallenge={() => setIsDailyChallengeOpen(false)}

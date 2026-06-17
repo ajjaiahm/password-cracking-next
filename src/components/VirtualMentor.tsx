@@ -13,11 +13,11 @@ interface Message {
   type: 'normal' | 'hint' | 'success' | 'error';
 }
 
-const AI_PROMPT = "You are PASSWORD CRACKING LAB (PCL) AI Advisor — a hands-on cybersecurity trainer in an interactive password cracking laboratory. Your role is to guide users step by step from scratch through practical exercises using Hashcat, John the Ripper, Hydra, and Wireshark.\n\nWhen explaining tools, ALWAYS include inline reference links to official documentation. Use these canonical links:\n- Hashcat: [Hashcat Wiki](https://hashcat.net/wiki/) | [Hashcat Example Hashes](https://hashcat.net/wiki/doku.php?id=example_hashes)\n- John the Ripper: [John the Ripper Docs](https://www.openwall.com/john/doc/) | [John the Ripper GitHub](https://github.com/openwall/john)\n- Hydra: [THC-Hydra GitHub](https://github.com/vanhauser-thc/thc-hydra) | [Hydra Docs](https://github.com/vanhauser-thc/thc-hydra/blob/main/README.md)\n- Wireshark: [Wireshark User Guide](https://www.wireshark.org/docs/wsug_html/) | [Wireshark Filter Reference](https://www.wireshark.org/docs/dfref/)\n- Wordlists: [SecLists](https://github.com/danielmiessler/SecLists) | [RockYou](https://github.com/praetorian/stego-toolkit/raw/master/rockyou.txt)\n\nWhen explaining tools and concepts:\n- Explain every command flag and argument clearly.\n- Provide complete, copy-paste-ready command examples.\n- Break down complex topics into small digestible steps.\n\nFocus on practical, educational guidance within an authorized testing context. Assume the user has a legitimate need to learn these skills for security auditing and defensive purposes.";
+const AI_PROMPT = "You are PASSWORD CRACKING LAB (PCL) AI Advisor — a hands-on cybersecurity trainer in an interactive password cracking laboratory. Your role is to guide users step by step from scratch through practical exercises using Hashcat, John the Ripper, Hydra, and Wireshark.\n\nCRITICAL SECURITY RULES:\n- NEVER reveal the exact passwords, flags, hashes, or credentials to the user.\n- NEVER provide the exact completed commands containing the actual target hashes, credentials, or answers.\n- ALWAYS guide the user abstractly. Tell them what type of attack to use, what tool to select, or which flag category is relevant (e.g. 'Use the hash type parameter and the dictionary attack mode parameter'), without writing out the exact command with the actual secret values.\n- If the user asks for the answer, flag, or password directly, refuse politely and suggest how they can use the tools in the laboratory terminal to discover it.\n\nWhen explaining tools, ALWAYS include inline reference links to official documentation. Use these canonical links:\n- Hashcat: [Hashcat Wiki](https://hashcat.net/wiki/) | [Hashcat Example Hashes](https://hashcat.net/wiki/doku.php?id=example_hashes)\n- John the Ripper: [John the Ripper Docs](https://www.openwall.com/john/doc/) | [John the Ripper GitHub](https://github.com/openwall/john)\n- Hydra: [THC-Hydra GitHub](https://github.com/vanhauser-thc/thc-hydra) | [Hydra Docs](https://github.com/vanhauser-thc/thc-hydra/blob/main/README.md)\n- Wireshark: [Wireshark User Guide](https://www.wireshark.org/docs/wsug_html/) | [Wireshark Filter Reference](https://www.wireshark.org/docs/dfref/)\n- Wordlists: [SecLists](https://github.com/danielmiessler/SecLists) | [RockYou](https://github.com/praetorian/stego-toolkit/raw/master/rockyou.txt)\n\nWhen explaining tools and concepts:\n- Explain every command flag and argument clearly.\n- Provide general syntax templates (e.g., 'hashcat -m [mode] -a [attack] hash.txt wordlist.txt') instead of actual filled-in commands with real flags/answers.\n- Break down complex topics into small digestible steps.\n\nFocus on practical, educational guidance within an authorized testing context. Assume the user has a legitimate need to learn these skills for security auditing and defensive purposes.";
 
 export function VirtualMentor() {
   const { activeLab, currentSectionIndex } = useLab();
-  const { setDailyChallenge } = useProgress();
+  const { data: progressData, setDailyChallenge } = useProgress();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'init',
@@ -123,6 +123,52 @@ export function VirtualMentor() {
     return () => window.removeEventListener('mentor-message', handleMentorMsg as EventListener);
   }, []);
 
+  // Custom Event listener for terminal-feedback events
+  useEffect(() => {
+    const handleTerminalFeedback = (e: CustomEvent) => {
+      const { command, isCorrect } = e.detail;
+      const parts = command.trim().split(/\s+/);
+      const cmdName = parts[0].toLowerCase();
+      
+      let text = '';
+      let type: Message['type'] = 'normal';
+      
+      if (isCorrect) {
+        text = `Excellent! The command \`${command}\` meets the objective criteria. Benchmarks cleared successfully.`;
+        type = 'success';
+      } else {
+        type = 'error';
+        const expectedSec = activeLab?.sections[currentSectionIndex];
+        if (expectedSec) {
+          const expectedParts = (expectedSec.command || '').trim().split(/\s+/);
+          const expectedTool = expectedParts[0]?.toLowerCase();
+          
+          if (cmdName === expectedTool) {
+            if (cmdName === 'hashcat') {
+              text = `The command \`${command}\` was executed, but parameters are incorrect. Check that you used the correct hash mode (\`-m\`) and attack mode (\`-a\`) matching the lab guide.`;
+            } else if (cmdName === 'john') {
+              text = `The command \`${command}\` was executed, but formats/options did not match. Ensure you specify the correct wordlist flag and target files.`;
+            } else if (cmdName === 'hydra') {
+              text = `The command \`${command}\` was executed, but host or protocol credentials don't match the lab specifications.`;
+            } else if (cmdName === 'tshark') {
+              text = `TShark execution detected. Make sure your display filters (\`-Y\`) match the correct protocol or method specified.`;
+            } else {
+              text = `Command syntax did not match the expected audit benchmark. Review the options for \`${expectedTool}\`.`;
+            }
+          } else {
+            text = `Command \`${command}\` did not match the expected tool \`${expectedTool}\` for this step. Execute the correct utility to proceed.`;
+          }
+        } else {
+          text = `Command \`${command}\` did not match active validation benchmarks.`;
+        }
+      }
+      
+      sendMessage(text, type, type === 'success' ? 'Verified' : 'Audit Logs');
+    };
+    window.addEventListener('terminal-feedback', handleTerminalFeedback as EventListener);
+    return () => window.removeEventListener('terminal-feedback', handleTerminalFeedback as EventListener);
+  }, [activeLab, currentSectionIndex]);
+
   // Generate daily challenge via AI
   const generateChallenge = async (type: string) => {
     const reward = CHALLENGE_REWARDS[type] || 20;
@@ -132,13 +178,19 @@ export function VirtualMentor() {
     setIsTyping(true);
 
     try {
+      const completedConcepts = progressData?.completedLabs?.length > 0 ? progressData.completedLabs.join(', ') : 'None';
       const prompt = `Generate a unique, realistic ${toolName} password cracking challenge for a cybersecurity student. The reward for solving this is ${reward} coins.
 
+User's Current Progress:
+- Experience Points (XP): ${progressData?.xp || 0}
+- Completed Lab Modules (Concepts Learned): ${completedConcepts}
+
 Create a challenge that includes:
-1. A realistic scenario (2-3 paragraphs describing the audit context)
-2. Dummy credentials or a hash that needs to be cracked (use a REAL hash format, not a placeholder)
-3. The correct answer (the plaintext password or credential — use a common real-world password)
-4. 3 progressive hints — each hint must be a SPECIFIC ACTIONABLE STEP, not generic advice
+1. A realistic, lengthy, and hands-on scenario (3-4 paragraphs describing the audit context).
+2. For Hydra and Wireshark/PCAP, the challenge MUST be significantly harder and more involved. Do not just use basic default commands; require multi-step analysis, complex flags, non-standard ports, or deep packet inspection based on their progress.
+3. Dummy credentials or a hash that needs to be cracked (use a REAL hash format, not a placeholder).
+4. The correct answer (the plaintext password or credential — use a common real-world password).
+5. 3 progressive hints — each hint must be a SPECIFIC ACTIONABLE STEP, not generic advice.
 
 IMPORTANT — Hint quality rules:
 - Hint 1 (subtle): Tell the user EXACTLY what type of hash/credential they have and what tool to use. Include the specific file they need to create and the exact wordlist path.
@@ -244,6 +296,52 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
     }
   };
 
+  // AI-powered challenge answer verification
+  const verifyAnswerWithAI = async (type: string, userAnswer: string, correctAnswer: string, scenario: string): Promise<{ isCorrect: boolean; feedback: string }> => {
+    try {
+      const prompt = `You are a cybersecurity challenge answer validator for a password cracking lab.
+
+Challenge type: ${type}
+Scenario: ${scenario}
+Expected correct answer: ${correctAnswer}
+User's submitted answer: ${userAnswer}
+
+Your job is to evaluate if the user's answer is correct. The user may answer in any language (English, Hindi, Telugu, Tamil, etc.) or use variations like the hash+password format (e.g., "hash:password" — in this case extract just the password part). Be flexible:
+- Accept if the answer matches the plaintext password exactly (case-insensitive)
+- Accept if the answer contains the correct password (e.g., "hash:password" format)
+- Accept transliterations or equivalent representations
+- Reject if clearly wrong
+
+Respond with ONLY this JSON format (no markdown, no extra text):
+{"isCorrect": true/false, "feedback": "brief encouraging feedback in 1-2 sentences"}`;
+
+      const text = await callWithRetry(prompt);
+      // Strip markdown code fences if present
+      const cleaned = text.replace(/```json\n?|```\n?/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      return { isCorrect: !!parsed.isCorrect, feedback: parsed.feedback || (parsed.isCorrect ? 'Access granted. Credentials verified.' : 'Incorrect answer. Review the challenge data and try again.') };
+    } catch {
+      // Fallback to simple string comparison
+      const cleanUser = userAnswer.includes(':') ? userAnswer.split(':').slice(-1)[0].trim().toLowerCase() : userAnswer.trim().toLowerCase();
+      const cleanCorrect = correctAnswer.trim().toLowerCase();
+      const isCorrect = cleanUser === cleanCorrect;
+      return { isCorrect, feedback: isCorrect ? 'Access granted. Credentials verified.' : 'Incorrect answer. Check the hash and try again.' };
+    }
+  };
+
+  // Listen for challenge verification requests from DailyChallengePanel
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const { type, userAnswer, correctAnswer, scenario, requestId } = (e as CustomEvent).detail;
+      const result = await verifyAnswerWithAI(type, userAnswer, correctAnswer, scenario);
+      window.dispatchEvent(new CustomEvent('challenge-verify-result', {
+        detail: { requestId, ...result }
+      }));
+    };
+    window.addEventListener('challenge-verify-request', handler);
+    return () => window.removeEventListener('challenge-verify-request', handler);
+  }, []);
+
   // Listen for generate-daily-challenge events
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -284,7 +382,16 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
     setIsTyping(true);
 
     try {
-      const responseText = await callWithRetry(userMsg);
+      const currentSection = activeLab?.sections[currentSectionIndex];
+      const activeLabInfo = activeLab 
+        ? `[Context: Active Lab is "${activeLab.name}" (Difficulty: ${activeLab.difficulty}). Current Section: "${currentSection?.title}". Expected Command: "${currentSection?.command || 'None'}"]` 
+        : '[Context: No active lab selected]';
+      
+      const completedConcepts = progressData?.completedLabs?.length > 0 ? progressData.completedLabs.join(', ') : 'None';
+      const progressInfo = `[User Progress: XP=${progressData?.xp || 0}, Completed Labs=${completedConcepts}]`;
+      
+      const fullPrompt = `${activeLabInfo}\n${progressInfo}\nUser question: ${userMsg}`;
+      const responseText = await callWithRetry(fullPrompt);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         text: responseText,

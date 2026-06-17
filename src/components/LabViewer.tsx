@@ -5,6 +5,7 @@ import { useLab } from '@/context/LabContext';
 import { useProgress } from '@/context/ProgressContext';
 import { LAB_DATA } from '@/data/labs';
 import toast from 'react-hot-toast';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DailyChallengePanel } from './DailyChallengePanel';
 import { 
   BookOpen, 
@@ -24,7 +25,8 @@ import {
   HelpCircle,
   Download,
   ClipboardCheck,
-  X as XIcon
+  X as XIcon,
+  Loader2
 } from 'lucide-react';
 
 // ── Assessment Question Type & Data ──
@@ -385,6 +387,7 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
   const [quizResults, setQuizResults] = useState<Record<number, boolean>>({});
   const [assessmentPassed, setAssessmentPassed] = useState<Record<string, boolean>>({});
   const [showAssessment, setShowAssessment] = useState(false);
+  const [validatingChallenge, setValidatingChallenge] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (!activeLab) return;
@@ -432,7 +435,7 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
 
   if (!activeLab) {
     return (
-      <div className="flex-1 p-8 overflow-y-auto bg-zinc-950 text-zinc-100 custom-scrollbar">
+      <div className="flex-1 h-full p-8 overflow-y-auto bg-zinc-950 text-zinc-100 custom-scrollbar">
         <div className="max-w-4xl mx-auto text-center mt-16 font-sans">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 rounded border border-zinc-800 flex items-center justify-center bg-zinc-900/60">
@@ -468,21 +471,100 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
     }
   };
 
-  const submitChallenge = (sectionIdx: number, section: any) => {
+
+  const validateAnswerWithAI = async (
+    question: string, 
+    acceptableAnswers: string[], 
+    userAnswer: string
+  ): Promise<{ isCorrect: boolean; feedback: string }> => {
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      
+      const prompt = `You are an AI cybersecurity expert and grading assistant for an interactive password cracking laboratory.
+The student has submitted an answer to the following question or challenge.
+
+[Challenge/Question]: "${question}"
+[Correct Answer Benchmarks/Examples]: ${JSON.stringify(acceptableAnswers)}
+[Student's Submission]: "${userAnswer}"
+
+Please analyze and grade the student's submission.
+Note that the student might write their response in their own native language (e.g. Spanish, German, Hindi, French, Russian, Chinese, etc.). If so, translate it to assess the conceptual correctness.
+Also note that they might express the correct answer/command slightly differently (e.g., using different flags or writing a sentence explaining the concept).
+
+Guidelines:
+1. If the challenge asks for a command, check if the student's command is semantically equivalent and achieves the exact same output/goal (e.g. check tool name and key flags).
+2. If the challenge asks a conceptual question (e.g., about memory-hardness), verify if they explained the concept correctly, even if they used their own words or a different language.
+3. Be encouraging and provide detailed feedback.
+
+Generate a JSON response matching this exact structure:
+{
+  "isCorrect": true or false,
+  "feedback": "A concise explanation (in the user's language if they wrote in another language, otherwise in English) acknowledging their approach and confirming why they are correct or guiding them if incorrect."
+}
+
+Do not include any formatting other than the raw JSON string. Do not wrap in markdown \`\`\`json blocks.`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text().trim();
+      const cleanText = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+      const parsed = JSON.parse(cleanText);
+      return {
+        isCorrect: !!parsed.isCorrect,
+        feedback: parsed.feedback || 'Validation completed.'
+      };
+    } catch (error) {
+      console.error("AI validation failed, falling back to local validation:", error);
+      const cleanUser = userAnswer.toLowerCase().trim();
+      const isCorrect = acceptableAnswers.some(ans => {
+        const cleanAns = ans.toLowerCase().trim();
+        return cleanUser.includes(cleanAns) || cleanAns.includes(cleanUser);
+      });
+      return {
+        isCorrect,
+        feedback: isCorrect 
+          ? "Verification successful. The signature matches our database logs." 
+          : "Verification failed. The signature doesn't match expected values. Please review parameters and retry."
+      };
+    }
+  };
+
+  const submitChallenge = async (sectionIdx: number, section: any) => {
     const answer = challengeInputs[sectionIdx]?.trim() || '';
-    if (!answer) return;
+    if (!answer || validatingChallenge[sectionIdx]) return;
 
-    const isCorrect = section.acceptableAnswers.includes(answer);
-    setChallengeFeedback({ ...challengeFeedback, [sectionIdx]: { isCorrect, text: isCorrect ? section.successMessage : section.failureMessage } });
-    
-    const event = new CustomEvent('mentor-message', { detail: { text: isCorrect ? section.successMessage : section.failureMessage, type: isCorrect ? 'success' : 'error' } });
-    window.dispatchEvent(event);
+    setValidatingChallenge(prev => ({ ...prev, [sectionIdx]: true }));
 
-    if (isCorrect) {
-      if (!isSectionCompleted(activeLab.id, sectionIdx)) {
-        addXp(20, 'Challenge completed');
-        addCoins(20, 'Challenge completed');
+    try {
+      const result = await validateAnswerWithAI(section.description || section.title, section.acceptableAnswers, answer);
+      const isCorrect = result.isCorrect;
+      const feedbackText = isCorrect 
+        ? (section.successMessage || result.feedback) 
+        : (section.failureMessage || result.feedback);
+
+      setChallengeFeedback(prev => ({ 
+        ...prev, 
+        [sectionIdx]: { isCorrect, text: feedbackText } 
+      }));
+      
+      const event = new CustomEvent('mentor-message', { 
+        detail: { 
+          text: feedbackText, 
+          type: isCorrect ? 'success' : 'error' 
+        } 
+      });
+      window.dispatchEvent(event);
+
+      if (isCorrect) {
+        if (!isSectionCompleted(activeLab.id, sectionIdx)) {
+          await addXp(20, 'Challenge completed');
+          await addCoins(20, 'Challenge completed');
+        }
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setValidatingChallenge(prev => ({ ...prev, [sectionIdx]: false }));
     }
   };
 
@@ -546,7 +628,7 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
   const isAssessmentDone = assessmentPassed[activeLab.id] || false;
 
   return (
-    <div className="flex-1 p-6 md:p-10 overflow-y-auto bg-zinc-950 text-zinc-100 custom-scrollbar relative">
+    <div className="flex-1 h-full p-6 md:p-10 overflow-y-auto bg-zinc-950 text-zinc-100 custom-scrollbar relative">
       <div className="max-w-3xl mx-auto pb-16">
         
         {/* Lab Info */}
@@ -689,19 +771,19 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
                       <div className="flex gap-3">
                         <input 
                           type="text" 
-                          disabled={challengeFeedback[idx]?.isCorrect}
+                          disabled={challengeFeedback[idx]?.isCorrect || validatingChallenge[idx]}
                           value={challengeInputs[idx] || ''}
                           onChange={(e) => setChallengeInputs({ ...challengeInputs, [idx]: e.target.value })}
                           onKeyDown={(e) => e.key === 'Enter' && submitChallenge(idx, section)}
-                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 font-mono focus:border-zinc-700 outline-none"
+                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 font-mono focus:border-zinc-700 outline-none disabled:opacity-50"
                           placeholder="Enter system signature/answer..."
                         />
                         <button 
-                          disabled={challengeFeedback[idx]?.isCorrect}
+                          disabled={challengeFeedback[idx]?.isCorrect || validatingChallenge[idx]}
                           onClick={() => submitChallenge(idx, section)}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-850 text-xs px-4 py-2 rounded font-mono transition-colors disabled:opacity-30"
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-850 text-xs px-4 py-2 rounded font-mono transition-colors disabled:opacity-30 flex items-center justify-center min-w-[85px]"
                         >
-                          Verify
+                          {validatingChallenge[idx] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
                         </button>
                       </div>
 
