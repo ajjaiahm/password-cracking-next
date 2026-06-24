@@ -261,6 +261,24 @@ function generateOutput(input: string): { output: string; isCorrect: boolean } {
     return { output: '', isCorrect: false };
   }
 
+  if (cmd === 'help') {
+    return { output: `Password Cracking Lab — Sandbox Simulator
+Available tools and commands:
+
+  hashcat          GPU-accelerated password recovery (modes: -m 0 MD5, -m 1000 NTLM, ...)
+  john             John the Ripper CPU password auditor (--wordlist, --rules, --show)
+  hydra            Network login scanner (SSH, FTP, HTTP)
+  tshark           Command-line packet capture analyzer (Wireshark CLI)
+  hashid           Hash type identifier
+  nmap             Network port scanner
+  cat / ls / pwd   File navigation (sandbox filesystem)
+  echo / grep      Text utilities
+  man <tool>       Show manual page for a tool
+  clear            Clear the terminal
+
+Type any command to try it. This is a safe educational environment.`, isCorrect: false };
+  }
+
   if (cmd === 'ls') {
     const dir = args[0] || '.';
     const contents: Record<string, string> = {
@@ -438,10 +456,22 @@ export function TerminalSimulator() {
 
   useEffect(() => {
     if (user) {
+      const emailPrefix = user.email?.split('@')[0] || 'user';
       setLines([
         {
+          id: 'sandbox-notice',
+          content: (
+            <div className="text-[10px] font-mono border border-amber-900/40 bg-amber-950/20 text-amber-500/80 rounded px-3 py-2 leading-relaxed">
+              <span className="font-bold text-amber-400">⚠ SANDBOX ENVIRONMENT</span>
+              {' — '}
+              This is an isolated educational simulator. Commands run in a simulated shell, not a real Linux system.
+              Filesystem state is session-scoped and per-user.
+            </div>
+          )
+        },
+        {
           id: 'init',
-          content: <span className="text-zinc-600">Terminal session initialized. Type any command or <span className="text-zinc-400">help</span> for available tools.</span>
+          content: <span className="text-zinc-600">Session initialized as <span className="text-zinc-400">{emailPrefix}</span>. Type <span className="text-zinc-400">help</span> for available tools.</span>
         }
       ]);
       const savedHistory = localStorage.getItem(`password_lab_history_${user.uid}`);
@@ -539,14 +569,16 @@ export function TerminalSimulator() {
       ['ls', 'pwd', 'cd', 'cat', 'echo', 'clear', 'sudo', 'nmap', 'grep', 'curl', 'wget', 'man', 'which',
        'ssh', 'ftp', 'telnet', 'nc', 'netcat', 'python', 'python3', 'node', 'ruby', 'perl', 'make', 'gcc',
        'g++', 'configure', 'cmake', 'pip', 'pip3', 'npm', 'exit', 'env', 'export', 'set', 'chmod', 'chown',
-       'mkdir', 'rm', 'cp', 'mv', 'touch', 'head', 'tail', 'sort', 'uniq', 'wc', 'cut', 'apt', 'apt-get']
+       'mkdir', 'rm', 'cp', 'mv', 'touch', 'head', 'tail', 'sort', 'uniq', 'wc', 'cut', 'apt', 'apt-get', 'help']
     ).includes(cmdName);
+
+    const emailPrefix = user.email?.split('@')[0] || 'user';
 
     setLines(prev => [...prev, {
       id: Date.now().toString(),
       content: (
         <div className="flex gap-2 text-xs font-mono">
-          <span className="text-emerald-400">operator@cracking-lab:~$</span>
+          <span className="text-emerald-400">{emailPrefix}@sandbox:~$</span>
           <span className={isInvalid ? 'text-red-400' : 'text-zinc-100'}>{cmd}</span>
         </div>
       ),
@@ -792,12 +824,12 @@ export function TerminalSimulator() {
             <div className="w-2.5 h-2.5 rounded-full bg-amber-900/60 border border-amber-800/40"></div>
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-900/60 border border-emerald-800/40"></div>
           </div>
-          <div className="text-[10px] font-mono text-cyan-500 flex items-center gap-2 uppercase tracking-wider">
-            <TerminalIcon className="w-3.5 h-3.5" /> operator@cracking-lab:~
+          <div className="text-[10px] font-mono text-amber-500/80 flex items-center gap-2 uppercase tracking-wider">
+            <TerminalIcon className="w-3.5 h-3.5" /> Sandbox Simulator
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-zinc-600 font-mono">PCL/shell</span>
+          <span className="text-[9px] text-zinc-600 font-mono">Educational / Simulated</span>
           <button className="text-zinc-500 hover:text-zinc-300 transition-colors">
             {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
           </button>

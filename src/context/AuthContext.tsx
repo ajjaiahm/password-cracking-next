@@ -14,6 +14,19 @@ import {
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
+// ── Login lockout constants ────────────────────────────────────────────────
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/** localStorage key for mock-mode lockout tracking */
+const getLockoutKey = (email: string) =>
+  `pcl_lockout_${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+/** Firestore doc id for live-mode lockout tracking */
+const getAttemptDocId = (email: string) =>
+  email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+// ──────────────────────────────────────────────────────────────────────────
+
 interface UserProfile {
   uid: string;
   email: string;
@@ -117,33 +130,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setLoading(true);
+
     if (isMockMode) {
-      // Simulated Local Auth
-      const storedUsers = localStorage.getItem('password_lab_mock_users');
-      let usersList = storedUsers ? JSON.parse(storedUsers) : [];
-      const match = usersList.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (!match || match.password !== password) {
+      // ── Mock mode: localStorage lockout ────────────────────────────────
+      const lockoutKey = getLockoutKey(email);
+      const raw = localStorage.getItem(lockoutKey);
+      const lockout = raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0 };
+
+      if (lockout.lockedUntil && Date.now() < lockout.lockedUntil) {
         setLoading(false);
-        throw new Error("Invalid credentials (Mock Mode: register if not exists).");
+        throw new Error(`ACCOUNT_LOCKED:${lockout.lockedUntil}`);
       }
-      
+
+      const storedUsers = localStorage.getItem('password_lab_mock_users');
+      const usersList: any[] = storedUsers ? JSON.parse(storedUsers) : [];
+      const match = usersList.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+
+      if (!match || match.password !== password) {
+        const newCount = lockout.count + 1;
+        const lockedUntil = newCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOCKOUT_DURATION_MS : 0;
+        localStorage.setItem(lockoutKey, JSON.stringify({ count: newCount, lockedUntil }));
+        setLoading(false);
+        if (lockedUntil) throw new Error(`ACCOUNT_LOCKED:${lockedUntil}`);
+        throw new Error(`INVALID_CREDENTIALS:${MAX_LOGIN_ATTEMPTS - newCount}`);
+      }
+
+      // Success: clear lockout record
+      localStorage.removeItem(lockoutKey);
       const mockSession = { uid: match.uid, email: match.email };
       localStorage.setItem('password_lab_mock_session', JSON.stringify(mockSession));
       setUser(mockSession);
-
       const profileData = localStorage.getItem(`password_lab_mock_profile_${match.uid}`);
-      if (profileData) {
-        setProfile(JSON.parse(profileData));
-      }
+      if (profileData) setProfile(JSON.parse(profileData));
       setLoading(false);
+
     } else {
-      // Live Firebase Login
+      // ── Live Firebase: Firestore lockout ───────────────────────────────
+      const attemptRef = doc(db, 'loginAttempts', getAttemptDocId(email));
+
+      // 1. Check existing lockout before attempting auth
+      try {
+        const snap = await getDoc(attemptRef);
+        if (snap.exists()) {
+          const { lockedUntil } = snap.data();
+          if (lockedUntil && Date.now() < lockedUntil) {
+            setLoading(false);
+            throw new Error(`ACCOUNT_LOCKED:${lockedUntil}`);
+          }
+        }
+      } catch (e: any) {
+        if (e.message?.startsWith('ACCOUNT_LOCKED')) { setLoading(false); throw e; }
+        // Firestore read error — continue and let Firebase auth decide
+      }
+
+      // 2. Attempt Firebase authentication
       try {
         await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
+        // Success: asynchronously clear attempt counter
+        setDoc(attemptRef, { count: 0, lockedUntil: 0, email: email.toLowerCase() }).catch(() => {});
+      } catch (authError: any) {
         setLoading(false);
-        throw error;
+        // Record the failed attempt and apply lockout if threshold reached
+        try {
+          const snap = await getDoc(attemptRef);
+          const current = snap.exists() ? snap.data() : { count: 0 };
+          const newCount = (current.count || 0) + 1;
+          const lockedUntil = newCount >= MAX_LOGIN_ATTEMPTS ? Date.now() + LOCKOUT_DURATION_MS : 0;
+          await setDoc(attemptRef, { count: newCount, lockedUntil, email: email.toLowerCase() });
+          if (lockedUntil) throw new Error(`ACCOUNT_LOCKED:${lockedUntil}`);
+          throw new Error(`INVALID_CREDENTIALS:${MAX_LOGIN_ATTEMPTS - newCount}`);
+        } catch (inner: any) {
+          if (inner.message?.startsWith('ACCOUNT_LOCKED') || inner.message?.startsWith('INVALID_CREDENTIALS')) {
+            throw inner;
+          }
+        }
+        throw authError;
       }
     }
   };

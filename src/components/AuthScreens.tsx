@@ -29,6 +29,27 @@ export function AuthScreens({ view }: AuthScreensProps) {
   const [successMsg, setSuccessMsg] = useState('');
   const [emailSent, setEmailSent] = useState(false); // for signup "check your inbox" state
 
+  // Lockout states
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [attemptsLeft, setAttemptsLeft] = useState<number>(5);
+  const [countdown, setCountdown] = useState<string>('');
+
+  // Live countdown ticker
+  React.useEffect(() => {
+    if (!lockoutUntil) { setCountdown(''); return; }
+    const tick = () => {
+      const remaining = lockoutUntil - Date.now();
+      if (remaining <= 0) { setLockoutUntil(null); setCountdown(''); return; }
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      setCountdown(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lockoutUntil]);
+
   const isMockBackend =
     !process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
     process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes('mock');
@@ -40,15 +61,29 @@ export function AuthScreens({ view }: AuthScreensProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password || lockoutUntil) return;
     clearMessages();
     setLoading(true);
     try {
       await login(email, password);
       toast.success('Authentication successful. Console unlocked.');
+      setAttemptsLeft(5);
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please check your credentials.');
-      toast.error(err.message || 'Authentication failed.');
+      const msg: string = err.message || '';
+      if (msg.startsWith('ACCOUNT_LOCKED:')) {
+        const ts = parseInt(msg.split(':')[1]);
+        setLockoutUntil(ts);
+        setError('');
+        toast.error('Account locked for 24 hours — too many failed attempts.');
+      } else if (msg.startsWith('INVALID_CREDENTIALS:')) {
+        const left = parseInt(msg.split(':')[1]);
+        setAttemptsLeft(left);
+        setError(`Invalid credentials. ${left} attempt${left === 1 ? '' : 's'} remaining before 24-hour lockout.`);
+        toast.error(`${left} attempt${left === 1 ? '' : 's'} remaining.`);
+      } else {
+        setError(msg || 'Authentication failed. Please check your credentials.');
+        toast.error(msg || 'Authentication failed.');
+      }
       setLoading(false);
     }
   };
@@ -166,11 +201,29 @@ export function AuthScreens({ view }: AuthScreensProps) {
         {/* ── LOGIN ── */}
         {view === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
+
+            {/* Lockout banner */}
+            {lockoutUntil && (
+              <div className="p-4 bg-red-950/40 border border-red-900/60 rounded space-y-2">
+                <div className="flex items-center gap-2 text-red-400 text-xs font-mono font-bold uppercase tracking-wider">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  Account Temporarily Locked
+                </div>
+                <p className="text-[11px] text-red-400/80 font-mono">
+                  Too many failed login attempts. Account locked for 24 hours.
+                </p>
+                <div className="text-center">
+                  <span className="text-red-300 font-mono text-lg font-bold tracking-widest">{countdown}</span>
+                  <p className="text-[9px] text-red-500/60 font-mono uppercase tracking-wider mt-1">time remaining</p>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[10px] uppercase tracking-wider text-zinc-500 font-mono mb-2">User Email</label>
               <input
                 type="email" required autoComplete="email"
-                value={email} onChange={e => setEmail(e.target.value)} disabled={loading}
+                value={email} onChange={e => setEmail(e.target.value)} disabled={loading || !!lockoutUntil}
                 className="w-full bg-zinc-950/60 border border-zinc-800 focus:border-zinc-600 text-zinc-100 text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-zinc-700"
                 placeholder="operator@system.domain"
               />
@@ -179,20 +232,38 @@ export function AuthScreens({ view }: AuthScreensProps) {
               <label className="block text-[10px] uppercase tracking-wider text-zinc-500 font-mono mb-2">Password</label>
               <input
                 type="password" required autoComplete="current-password"
-                value={password} onChange={e => setPassword(e.target.value)} disabled={loading}
+                value={password} onChange={e => setPassword(e.target.value)} disabled={loading || !!lockoutUntil}
                 className="w-full bg-zinc-950/60 border border-zinc-800 focus:border-zinc-600 text-zinc-100 text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-zinc-700"
                 placeholder="••••••••"
               />
             </div>
+
+            {/* Attempts remaining indicator */}
+            {!lockoutUntil && attemptsLeft < 5 && (
+              <div className="flex items-center gap-1.5 px-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 h-1 rounded-full transition-colors ${
+                      i < attemptsLeft ? 'bg-amber-600/60' : 'bg-red-800/80'
+                    }`}
+                  />
+                ))}
+                <span className="text-[9px] text-amber-500/80 font-mono ml-1 whitespace-nowrap">
+                  {attemptsLeft} left
+                </span>
+              </div>
+            )}
+
             <div className="flex justify-between items-center text-xs pt-1">
               <button type="button" onClick={() => { navigate('/forgot'); clearMessages(); }}
                 className="text-zinc-500 hover:text-zinc-300 transition-colors" disabled={loading}>
                 Forgot Password?
               </button>
             </div>
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || !!lockoutUntil}
               className="w-full flex items-center justify-center gap-2 mt-2 py-3 bg-zinc-100 hover:bg-white text-zinc-900 font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Authenticate <ArrowRight className="w-4 h-4" /></>}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : lockoutUntil ? 'Account Locked' : <>Authenticate <ArrowRight className="w-4 h-4" /></>}
             </button>
             <div className="text-center text-xs pt-4 border-t border-zinc-800/50 text-zinc-500">
               New operator?{' '}

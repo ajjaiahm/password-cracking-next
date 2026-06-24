@@ -67,6 +67,7 @@ interface ProgressContextType {
   completeSection: (labId: string, sectionIndex: number) => Promise<void>;
   isLabCompleted: (labId: string) => boolean;
   completeLab: (labId: string, lab: Lab) => Promise<void>;
+  isTrackLocked: (trackIndex: number) => boolean;
   isLabLocked: (trackId: string, labIndex: number) => boolean;
   getRank: () => string;
   resetProgress: () => Promise<void>;
@@ -254,7 +255,20 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     await saveData(newData);
   };
 
-  const isLabLocked = (trackId: string, labIndex: number) => {
+  // Track N is locked until all labs of track N-1 are completed.
+  // Track 0 ("Password Security Basics") is always unlocked.
+  const isTrackLocked = (trackIndex: number): boolean => {
+    if (trackIndex <= 0) return false;
+    const prevTrack = LAB_DATA[trackIndex - 1];
+    if (!prevTrack) return false;
+    return !prevTrack.labs.every(lab => data.completedLabs.includes(lab.id));
+  };
+
+  const isLabLocked = (trackId: string, labIndex: number): boolean => {
+    const trackIndex = LAB_DATA.findIndex(t => t.id === trackId);
+    // If the whole track is locked, every lab inside is also locked
+    if (trackIndex > 0 && isTrackLocked(trackIndex)) return true;
+    // Within an unlocked track, each lab requires the previous one to be complete
     if (labIndex === 0) return false;
     const track = LAB_DATA.find(t => t.id === trackId);
     if (!track) return true;
@@ -356,7 +370,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   return (
     <ProgressContext.Provider value={{
       data, loading, addXp, addCoins, deductCoins, incrementCommandCount, getCurrentSection, setCurrentSection,
-      isSectionCompleted, completeLab, isLabLocked,
+      isSectionCompleted, completeLab, isTrackLocked, isLabLocked,
       getRank, resetProgress, isLabCompleted, completeSection,
       setDailyChallenge, completeDailyChallenge, advanceHintInChallenge,
       getDailyChallenge, getDailyChallengeDayStart,
