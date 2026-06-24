@@ -18,7 +18,9 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: Build Next.js Image
-      run: docker build -t nextjs-app:latest .
+      run: |
+        touch .env.local
+        docker build -t nextjs-app:latest .
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
