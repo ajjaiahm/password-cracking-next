@@ -214,6 +214,15 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen, openDashboard, openLead
             </div>
           </div>
           
+          {user?.isAdmin || (useAuth().profile?.isAdmin) ? (
+            <button 
+              onClick={() => window.location.hash = '#/admin'}
+              className="w-full flex items-center justify-center gap-2 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:text-amber-400 hover:bg-amber-500/20 rounded transition-colors text-[10px] uppercase font-mono tracking-widest font-bold mb-2"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" /> Admin Control Panel
+            </button>
+          ) : null}
+
           <div className="grid grid-cols-4 gap-2">
             <button 
               onClick={openDashboard}

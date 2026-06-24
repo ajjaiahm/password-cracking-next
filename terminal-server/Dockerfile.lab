@@ -1,0 +1,34 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install essential password cracking and networking tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    hashcat \
+    john \
+    hydra \
+    tshark \
+    nmap \
+    curl \
+    wget \
+    ca-certificates \
+    iproute2 \
+    iputils-ping \
+    sudo \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up an unprivileged 'operator' user with sudo access
+RUN useradd -m -s /bin/bash operator && \
+    echo "operator:operator" | chpasswd && \
+    adduser operator sudo
+
+# Set up mock files for the lab
+WORKDIR /home/operator
+RUN echo "admin:21232f297a57a5a743894a0e4a801fc3" > hashes.txt && \
+    echo "password123\nadmin\nsecret123\nqwerty\nletmein" > rockyou.txt && \
+    chown -R operator:operator /home/operator
+
+USER operator
+CMD ["/bin/bash"]

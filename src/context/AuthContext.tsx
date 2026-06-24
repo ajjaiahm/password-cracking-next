@@ -34,6 +34,7 @@ interface UserProfile {
   securityInterest: string;
   experienceLevel: string;
   onboardingComplete: boolean;
+  isAdmin?: boolean;
   createdAt: string;
 }
 
@@ -325,6 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Account with this email already exists.');
       }
       const uid = 'mock_uid_' + Math.random().toString(36).substring(2, 11);
+      const isFirstUser = usersList.length === 0;
       usersList.push({ uid, email, password, name });
       localStorage.setItem('password_lab_mock_users', JSON.stringify(usersList));
       const newProfile: UserProfile = {
@@ -332,6 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         securityInterest: '',
         experienceLevel: '',
         onboardingComplete: false,
+        isAdmin: isFirstUser,
         createdAt: new Date().toISOString()
       };
       localStorage.setItem(`password_lab_mock_profile_${uid}`, JSON.stringify(newProfile));
@@ -345,6 +348,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!tmpPwd || !uid) throw new Error('Verification session expired or link is invalid. Please restart registration.');
 
     try {
+      // Check if this is the first user
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const isFirstUser = usersSnap.empty;
+
       const cred = await signInWithEmailAndPassword(auth, email, tmpPwd);
       await updatePassword(cred.user, password);
       // Save profile to Firestore
@@ -356,6 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         securityInterest: '',
         experienceLevel: '',
         onboardingComplete: false,
+        isAdmin: isFirstUser,
         createdAt: new Date().toISOString()
       };
       await setDoc(userRef, newProfile);

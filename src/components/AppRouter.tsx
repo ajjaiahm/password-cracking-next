@@ -62,6 +62,21 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Route guard for Admin pages
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, profile } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (profile && !profile.isAdmin) {
+    return <Navigate to="/workspace" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
 function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (delta: number) => void; onDragStart?: () => void; onDragEnd?: () => void; position: 'left' | 'right' }) {
   const dragging = useRef(false);
   const startX = useRef(0);
@@ -276,6 +291,8 @@ function WorkspaceLayout() {
   );
 }
 
+import { AdminDashboard } from './AdminDashboard';
+
 export function AppRouter() {
   return (
     <>
@@ -319,6 +336,7 @@ export function AppRouter() {
           <Route path="/setup" element={<AccountSetupPage />} />
           <Route path="/onboarding" element={<OnboardingRoute><AuthScreens view="onboarding" /></OnboardingRoute>} />
           <Route path="/workspace" element={<ProtectedRoute><WorkspaceLayout /></ProtectedRoute>} />
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="*" element={<Navigate to="/workspace" replace />} />
         </Routes>
       </HashRouter>
