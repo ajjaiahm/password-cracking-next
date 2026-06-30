@@ -35,3 +35,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 Visit: https://passwdcracking.vercel.app/#/login/
+and docker should be run lively and currently its not live
