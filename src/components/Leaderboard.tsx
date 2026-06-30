@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Trophy, X as XIcon, User as UserIcon, Medal, Coins } from 'lucide-react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface LeaderboardEntry {
@@ -15,19 +15,30 @@ interface LeaderboardEntry {
   rank: number;
 }
 
+// Module-level cache — survives component remounts, resets after 60s
+let cachedEntries: LeaderboardEntry[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60_000; // 60 seconds
+
 export function Leaderboard({ onClose }: { onClose: () => void }) {
   const { isMockMode } = useAuth();
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>(cachedEntries ?? []);
+  const [loading, setLoading] = useState(!cachedEntries || Date.now() - cacheTimestamp > CACHE_TTL_MS);
 
   useEffect(() => {
+    // Use cached data if still fresh
+    if (cachedEntries && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+      setEntries(cachedEntries);
+      setLoading(false);
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
         let results: LeaderboardEntry[] = [];
 
         if (isMockMode) {
-          // Fetch from mock localStorage
           const storedUsers = localStorage.getItem('password_lab_mock_users');
           if (storedUsers) {
             const users = JSON.parse(storedUsers);
@@ -40,34 +51,41 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
                 email: u.email,
                 xp: progress.xp || 0,
                 coins: progress.coins || 0,
-                rank: 0
+                rank: 0,
               };
             });
           }
         } else {
-          // Live Firebase Fetch — query all users and their progress
           try {
+            // Fetch all user docs
             const usersSnap = await getDocs(collection(db, 'users'));
-            const allEntries: LeaderboardEntry[] = [];
-            for (const userDoc of usersSnap.docs) {
+
+            // Fetch all progress docs IN PARALLEL — O(n) but concurrent, not serial
+            const progressPromises = usersSnap.docs.map(userDoc =>
+              getDoc(doc(db, 'users', userDoc.id, 'progress', 'state'))
+                .then(progressSnap => ({
+                  userDoc,
+                  progressSnap,
+                }))
+                .catch(() => ({ userDoc, progressSnap: null })) // Never fail the whole batch
+            );
+
+            const resolved = await Promise.all(progressPromises);
+
+            results = resolved.map(({ userDoc, progressSnap }) => {
               const profile = userDoc.data();
               const email = profile.email || userDoc.id;
               const name = profile.name || email.split('@')[0];
-              // Get progress subcollection
-              const progressRef = doc(db, 'users', userDoc.id, 'progress', 'state');
-              const progressSnap = await getDoc(progressRef);
               let xp = 0, coins = 0;
-              if (progressSnap.exists()) {
+              if (progressSnap?.exists()) {
                 const p = progressSnap.data();
                 xp = p.xp || 0;
                 coins = p.coins || 0;
               }
-              allEntries.push({ id: userDoc.id, name, email, xp, coins, rank: 0 });
-            }
-            results = allEntries;
+              return { id: userDoc.id, name, email, xp, coins, rank: 0 };
+            });
           } catch (err) {
-            console.error("Error querying Firestore leaderboard:", err);
-            // Fallback to hardcoded demo data
+            console.error('Error querying Firestore leaderboard:', err);
             results = [
               { id: 'usr_1a2b3c', name: 'ProHacker', email: 'pro_hacker@example.com', xp: 2500, coins: 450, rank: 0 },
               { id: 'usr_4d5e6f', name: 'SecStudent', email: 'sec_student@example.com', xp: 1200, coins: 200, rank: 0 },
@@ -76,15 +94,16 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
           }
         }
 
-        // Sort by Coins (or XP) descending
+        // Sort by coins descending, assign ranks, cap at top 25
         results.sort((a, b) => b.coins - a.coins);
-        
-        // Assign ranks
-        results = results.map((entry, idx) => ({ ...entry, rank: idx + 1 }));
-        
-        setEntries(results.slice(0, 10)); // Top 10
+        results = results.slice(0, 25).map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+
+        // Cache the result
+        cachedEntries = results;
+        cacheTimestamp = Date.now();
+        setEntries(results);
       } catch (err) {
-        console.error("Error fetching leaderboard", err);
+        console.error('Error fetching leaderboard', err);
       } finally {
         setLoading(false);
       }
@@ -103,7 +122,9 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
             <Trophy className="w-5 h-5 text-amber-400" />
             <div>
               <h2 className="text-sm font-mono font-bold text-zinc-100 uppercase tracking-wider">Leaderboard</h2>
-              <p className="text-[10px] text-zinc-500 font-mono">Top operators ranked by earned coins</p>
+              <p className="text-[10px] text-zinc-500 font-mono">
+                Top 25 operators · refreshes every 60s
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
@@ -115,7 +136,7 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : entries.length === 0 ? (
             <div className="text-center py-12 text-zinc-500 font-mono text-xs">
@@ -124,23 +145,25 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
           ) : (
             <div className="space-y-2">
               {entries.map((entry) => (
-                <div 
-                  key={entry.id} 
+                <div
+                  key={entry.id}
                   className="flex items-center justify-between p-3 rounded bg-zinc-950/40 border border-zinc-800 hover:border-zinc-700 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-8 h-8 rounded flex items-center justify-center font-bold font-mono text-xs
-                      ${entry.rank === 1 ? 'bg-amber-950/50 border border-amber-500/50 text-amber-400' : 
+                      ${entry.rank === 1 ? 'bg-amber-950/50 border border-amber-500/50 text-amber-400' :
                         entry.rank === 2 ? 'bg-zinc-300/10 border border-zinc-300/30 text-zinc-300' :
                         entry.rank === 3 ? 'bg-orange-950/50 border border-orange-700/50 text-orange-400' :
                         'bg-zinc-900 border border-zinc-800 text-zinc-500'
-                      }
-                    `}>
+                      }`}
+                    >
                       #{entry.rank}
                     </div>
                     <div>
                       <div className="font-mono text-xs text-zinc-200">{entry.name}</div>
-                      <div className="font-mono text-[10px] text-zinc-500">ID: {entry.id.slice(0, 12)} | {entry.xp} XP</div>
+                      <div className="font-mono text-[10px] text-zinc-500">
+                        ID: {entry.id.slice(0, 12)} | {entry.xp} XP
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 font-mono text-sm font-bold text-amber-500">

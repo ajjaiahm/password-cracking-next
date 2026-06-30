@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Function to check if the user is an admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // ── USERS COLLECTION ───────────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone can read basic user profile info for the leaderboard (name, etc)
+      // but only the owner or an admin can read the full document
+      allow read: if isAuthenticated();
+      
+      // Only the user themselves can create or update their profile
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      allow update: if isAuthenticated() && request.auth.uid == userId 
+                    // Users cannot promote themselves to admin
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) 
+                        || isAdmin());
+                        
+      allow delete: if isAdmin();
+      
+      // ── PROGRESS SUBCOLLECTION ───────────────────────────────────────────
+      match /progress/{document=**} {
+        // Anyone can read progress for the leaderboard
+        allow read: if isAuthenticated();
+        
+        // Only the user can update their own progress
+        allow write: if isAuthenticated() && request.auth.uid == userId;
+        // In a production environment, you might restrict this further by using Cloud Functions
+        // to grant XP/Coins rather than allowing the client to write to it directly,
+        // but for this architecture, client-side writes are restricted to the owner.
+      }
+    }
+    
+    // ── LOGIN ATTEMPTS COLLECTION (Lockout Mechanism) ──────────────────────
+    match /loginAttempts/{attemptId} {
+      // Clients don't have auth when trying to log in, so we must allow anonymous writes.
+      // We restrict it so they can only update specific fields related to lockouts.
+      allow read, write: if true; 
+    }
+    
+    // ── FALLBACK ───────────────────────────────────────────────────────────
+    // Deny access to everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

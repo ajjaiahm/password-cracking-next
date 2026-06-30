@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { LAB_DATA, Lab, Track } from '@/data/labs';
 import { useAuth } from './AuthContext';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -155,9 +155,20 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     loadProgress();
   }, [user, isMockMode]);
 
-  const saveData = async (newData: ProgressData) => {
+  // Debounce timer ref — so rapid successive calls batch into one Firestore write
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const saveData = useCallback(async (newData: ProgressData) => {
+    // Optimistically update local state immediately
     setData(newData);
-    if (user) {
+
+    if (!user) return;
+
+    // Clear any pending save
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+
+    // Schedule the actual persistence after 500ms of inactivity
+    saveTimer.current = setTimeout(async () => {
       if (isMockMode) {
         localStorage.setItem(`password_lab_progress_mock_${user.uid}`, JSON.stringify(newData));
       } else {
@@ -165,11 +176,11 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
           const docRef = doc(db, 'users', user.uid, 'progress', 'state');
           await setDoc(docRef, newData);
         } catch (err) {
-          console.error("Failed to save progress to database", err);
+          console.error('Failed to save progress to database', err);
         }
       }
-    }
-  };
+    }, 500);
+  }, [user, isMockMode]);
 
   const addXp = async (amount: number, reason: string) => {
     const newData = { ...data, xp: (data.xp || 0) + amount };

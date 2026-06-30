@@ -11,7 +11,7 @@ import {
   updatePassword,
   User
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
 // ── Login lockout constants ────────────────────────────────────────────────
@@ -217,14 +217,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return !usersList.some((u: any) => u.name?.toLowerCase() === name.toLowerCase());
     }
     try {
-      const usersSnap = await getDocs(collection(db, 'users'));
-      for (const docSnap of usersSnap.docs) {
-        const data = docSnap.data();
-        if (data.name?.toLowerCase() === name.toLowerCase()) return false;
-      }
-      return true;
+      // Targeted query — reads at most 1 document regardless of user count
+      const q = query(collection(db, 'users'), where('name', '==', name), limit(1));
+      const snap = await getDocs(q);
+      return snap.empty;
     } catch {
-      return true;
+      return true; // Fallback: allow submission, server will validate
     }
   };
 
@@ -348,9 +346,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!tmpPwd || !uid) throw new Error('Verification session expired or link is invalid. Please restart registration.');
 
     try {
-      // Check if this is the first user
-      const usersSnap = await getDocs(collection(db, 'users'));
-      const isFirstUser = usersSnap.empty;
+      // Check if this is the first user — limit(1) avoids reading all docs
+      const firstUserQ = query(collection(db, 'users'), limit(1));
+      const firstUserSnap = await getDocs(firstUserQ);
+      const isFirstUser = firstUserSnap.empty;
 
       const cred = await signInWithEmailAndPassword(auth, email, tmpPwd);
       await updatePassword(cred.user, password);

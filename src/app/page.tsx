@@ -3,7 +3,8 @@
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useProgress } from '@/context/ProgressContext';
-import { AppRouter } from '@/components/AppRouter';
+import dynamic from 'next/dynamic';
+const AppRouter = dynamic(() => import('@/components/AppRouter').then(mod => mod.AppRouter), { ssr: false });
 import { Loader2 } from 'lucide-react';
 import { HackerBackground } from '@/components/HackerBackground';
 

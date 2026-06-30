@@ -4,12 +4,26 @@ services:
       context: .
       dockerfile: Dockerfile
     image: nextjs-app:1.0
-    # We remove 'container_name' and 'ports' so Docker can spin up multiple isolated replicas safely!
+    # No container_name or ports — Nginx is the single entry point
     env_file:
       - .env.local
     restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
-  # Our Load Balancer
+  # Load Balancer — single entry point on port 8080
   nginx:
     image: nginx:alpine
     ports:
@@ -17,9 +31,16 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - web
-      - terminal
+      web:
+        condition: service_healthy
+      terminal:
+        condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
 
   terminal:
     build:
@@ -28,20 +49,66 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    environment:
+      - MAX_CONCURRENT_SESSIONS=50
+      - IDLE_TIMEOUT_MINUTES=30
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
-  # Phase 7: Observability
+  # Observability — Prometheus
   prometheus:
     image: prom/prometheus:latest
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
+  # Observability — Grafana
   grafana:
     image: grafana/grafana:latest
     ports:
       - "3001:3000"
     depends_on:
       - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # Container metrics for Prometheus (monitors lab containers)
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  prometheus_data:
+  grafana_data:
