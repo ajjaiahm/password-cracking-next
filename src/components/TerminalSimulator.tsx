@@ -176,7 +176,7 @@ export function TerminalSimulator() {
       </div>
 
       {/* Terminal Container */}
-      <div className={`relative flex-1 bg-[#09090b] overflow-hidden p-2 ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'}`}>
+      <div className={isExpanded ? "relative flex-1 bg-[#09090b] overflow-hidden p-2 opacity-100" : "fixed -top-[9999px] -left-[9999px] w-[800px] h-[600px] opacity-0 pointer-events-none"}>
         {!user && (
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-10">
             <p className="text-zinc-500 font-mono text-sm">Please login to access the terminal.</p>
