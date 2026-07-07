@@ -40,10 +40,11 @@ export function TerminalSimulator() {
     term.loadAddon(fitAddon);
     term.open(terminalRef.current);
     
-    // Safely fit after mounting to prevent undefined dimension errors
     setTimeout(() => {
       try {
-        fitAddon.fit();
+        if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+          fitAddon.fit();
+        }
       } catch (e) {
         console.warn("xterm fit warning:", e);
       }
@@ -105,7 +106,9 @@ export function TerminalSimulator() {
 
     const handleResize = () => {
       try {
-        fitAddon.fit();
+        if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+          fitAddon.fit();
+        }
       } catch (e) {}
     };
     window.addEventListener('resize', handleResize);
@@ -138,7 +141,9 @@ export function TerminalSimulator() {
     if (isExpanded && fitAddonRef.current) {
       setTimeout(() => {
         try {
-          fitAddonRef.current?.fit();
+          if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+            fitAddonRef.current?.fit();
+          }
         } catch (e) {}
       }, 50);
     }
@@ -171,7 +176,7 @@ export function TerminalSimulator() {
       </div>
 
       {/* Terminal Container */}
-      <div className={`relative flex-1 bg-[#09090b] overflow-hidden ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'}`}>
+      <div className={`relative flex-1 bg-[#09090b] overflow-hidden p-2 ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'}`}>
         {!user && (
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-10">
             <p className="text-zinc-500 font-mono text-sm">Please login to access the terminal.</p>
@@ -179,8 +184,7 @@ export function TerminalSimulator() {
         )}
         <div 
           ref={terminalRef} 
-          className="absolute inset-0 p-2"
-          style={{ width: '100%', height: '100%' }}
+          className="w-full h-full"
         />
       </div>
     </div>
