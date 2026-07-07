@@ -378,7 +378,7 @@ function AssessmentModal({
 // ── Main LabViewer Component ──
 export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showDailyChallenge?: boolean; onCloseDailyChallenge?: () => void }) {
   const { activeTrackId, activeLab, currentSectionIndex, nextSection, prevSection, jumpToSection, setExpectedContext, loadNextLab } = useLab();
-  const { isSectionCompleted, addXp, addCoins, deductCoins, completeLab, data: progressData } = useProgress();
+  const { isSectionCompleted, completeSection, addXp, addCoins, deductCoins, completeLab, data: progressData } = useProgress();
 
   const [challengeInputs, setChallengeInputs] = useState<Record<number, string>>({});
   const [challengeFeedback, setChallengeFeedback] = useState<Record<number, { isCorrect: boolean, text: string }>>({});
@@ -605,6 +605,7 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
     if (allCorrect) {
       if (!isSectionCompleted(activeLab.id, sectionIdx)) {
         addXp(50, 'Perfect Quiz Score');
+        completeSection(activeLab.id, sectionIdx);
       }
       const event = new CustomEvent('mentor-message', { detail: { text: 'Audit verification complete: answers match system logs.', type: 'success' } });
       window.dispatchEvent(event);

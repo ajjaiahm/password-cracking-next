@@ -20,7 +20,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Connect to Docker daemon
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+const docker = new Docker();
 
 // ── Session Tracking ─────────────────────────────────────────────────────────
 // userId → { ws, lastActivity }
