@@ -39,7 +39,15 @@ export function TerminalSimulator() {
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(terminalRef.current);
-    fitAddon.fit();
+    
+    // Safely fit after mounting to prevent undefined dimension errors
+    setTimeout(() => {
+      try {
+        fitAddon.fit();
+      } catch (e) {
+        console.warn("xterm fit warning:", e);
+      }
+    }, 10);
     
     termInstance.current = term;
     fitAddonRef.current = fitAddon;
@@ -95,7 +103,11 @@ export function TerminalSimulator() {
       }
     });
 
-    const handleResize = () => fitAddon.fit();
+    const handleResize = () => {
+      try {
+        fitAddon.fit();
+      } catch (e) {}
+    };
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -125,13 +137,15 @@ export function TerminalSimulator() {
   useEffect(() => {
     if (isExpanded && fitAddonRef.current) {
       setTimeout(() => {
-        fitAddonRef.current?.fit();
+        try {
+          fitAddonRef.current?.fit();
+        } catch (e) {}
       }, 50);
     }
   }, [isExpanded]);
 
   return (
-    <div className={`flex flex-col border-t border-zinc-800 bg-zinc-950 transition-all duration-300 ease-in-out \${isExpanded ? 'flex-1 md:flex-none md:h-1/2' : 'h-10'}`}>
+    <div className={`flex flex-col border-t border-zinc-800 bg-zinc-950 transition-all duration-300 ease-in-out ${isExpanded ? 'flex-1 md:flex-none md:h-1/2' : 'h-10'}`}>
       {/* Header */}
       <div 
         className="h-10 px-4 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between cursor-pointer hover:bg-zinc-800/50 transition-colors"
@@ -142,7 +156,7 @@ export function TerminalSimulator() {
           <h2 className="text-xs font-mono font-medium tracking-wide text-zinc-300 uppercase">
             Lab Terminal
           </h2>
-          <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold \${
+          <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold ${
             status === 'connected' ? 'bg-emerald-500/20 text-emerald-400' : 
             status === 'connecting' ? 'bg-amber-500/20 text-amber-400' : 
             'bg-red-500/20 text-red-400'
@@ -157,7 +171,7 @@ export function TerminalSimulator() {
       </div>
 
       {/* Terminal Container */}
-      <div className={`relative flex-1 bg-[#09090b] overflow-hidden \${isExpanded ? 'block' : 'hidden'}`}>
+      <div className={`relative flex-1 bg-[#09090b] overflow-hidden ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none h-0'}`}>
         {!user && (
           <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-10">
             <p className="text-zinc-500 font-mono text-sm">Please login to access the terminal.</p>
