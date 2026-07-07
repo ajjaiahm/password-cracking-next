@@ -24,100 +24,105 @@ export function TerminalSimulator() {
   useEffect(() => {
     if (!user || !terminalRef.current) return;
 
-    // Initialize xterm.js
-    const term = new Terminal({
-      cursorBlink: true,
-      theme: {
-        background: '#09090b',
-        foreground: '#a1a1aa',
-        cursor: '#10b981',
-      },
-      fontFamily: 'monospace',
-      fontSize: 13,
-    });
-    
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    term.open(terminalRef.current);
-    
-    const initialFitTimeoutId = setTimeout(() => {
+    let term: Terminal | null = null;
+    let fitAddon: FitAddon | null = null;
+    let ws: WebSocket | null = null;
+    let initialized = false;
+
+    const initTerminal = () => {
+      if (initialized || !terminalRef.current) return;
+      if (terminalRef.current.clientWidth === 0 || terminalRef.current.clientHeight === 0) return;
+      
+      initialized = true;
+
+      term = new Terminal({
+        cursorBlink: true,
+        theme: {
+          background: '#09090b',
+          foreground: '#a1a1aa',
+          cursor: '#10b981',
+        },
+        fontFamily: 'monospace',
+        fontSize: 13,
+      });
+      
+      fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(terminalRef.current);
+      
       try {
-        if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
-          fitAddon.fit();
-        }
+        fitAddon.fit();
       } catch (e) {
-        console.warn("xterm fit warning:", e);
+        console.warn('Initial fit warning:', e);
       }
-    }, 10);
-    
-    termInstance.current = term;
-    fitAddonRef.current = fitAddon;
-
-    setStatus('connecting');
-
-    // Connect WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host; // This handles both port 8080 (nginx) and port 3000 (next dev, though API proxy won't work there unless Next.js rewrites it)
-    
-    // Fallback to localhost:4000 if we are running the Next.js dev server without Nginx
-    const isDevServer = window.location.port === '3000';
-    const wsUrl = isDevServer 
-      ? `ws://localhost:4000/?userId=${user.uid}`
-      : `${protocol}//${host}/api/terminal/?userId=${user.uid}`;
       
-    const ws = new WebSocket(wsUrl);
-    wsInstance.current = ws;
+      termInstance.current = term;
+      fitAddonRef.current = fitAddon;
 
-    ws.onopen = () => {
-      setStatus('connected');
+      setStatus('connecting');
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const isDevServer = window.location.port === '3000';
+      const wsUrl = isDevServer 
+        ? `ws://localhost:4000/?userId=${user.uid}`
+        : `${protocol}//${host}/api/terminal/?userId=${user.uid}`;
+        
+      ws = new WebSocket(wsUrl);
+      wsInstance.current = ws;
+
+      ws.onopen = () => setStatus('connected');
+      ws.onclose = () => {
+        setStatus('disconnected');
+        term?.write('\r\n\x1b[31m[System] Disconnected from lab server.\x1b[0m\r\n');
+      };
+      
+      ws.onmessage = (event) => {
+        if (typeof event.data === 'string') {
+          term?.write(event.data);
+        } else {
+          event.data.text().then((text: string) => term?.write(text));
+        }
+      };
+
+      term.onData((data) => {
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws.send(data);
+        }
+        
+        if (data === '\r') {
+          const cmd = commandBuffer.current.trim();
+          checkCommandAgainstLab(cmd);
+          commandBuffer.current = '';
+        } else if (data === '\x7f') {
+          commandBuffer.current = commandBuffer.current.slice(0, -1);
+        } else if (data >= ' ' && data <= '~') {
+          commandBuffer.current += data;
+        }
+      });
     };
 
-    ws.onmessage = (event) => {
-      if (typeof event.data === 'string') {
-        term.write(event.data);
+    const resizeObserver = new ResizeObserver(() => {
+      if (!initialized) {
+        initTerminal();
       } else {
-        // Blob to text
-        event.data.text().then((text: string) => term.write(text));
-      }
-    };
-
-    ws.onclose = () => {
-      setStatus('disconnected');
-      term.write('\r\n\x1b[31m[System] Disconnected from lab server.\x1b[0m\r\n');
-    };
-
-    // Handle user input
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data);
-      }
-      
-      // Simple command tracking for lab progression
-      if (data === '\r') {
-        const cmd = commandBuffer.current.trim();
-        checkCommandAgainstLab(cmd);
-        commandBuffer.current = '';
-      } else if (data === '\x7f') { // Backspace
-        commandBuffer.current = commandBuffer.current.slice(0, -1);
-      } else if (data >= ' ' && data <= '~') {
-        commandBuffer.current += data;
+        try {
+          if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+            fitAddon?.fit();
+          }
+        } catch (e) {}
       }
     });
 
-    const handleResize = () => {
-      try {
-        if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
-          fitAddon.fit();
-        }
-      } catch (e) {}
-    };
-    window.addEventListener('resize', handleResize);
+    resizeObserver.observe(terminalRef.current);
 
     return () => {
-      clearTimeout(initialFitTimeoutId);
-      window.removeEventListener('resize', handleResize);
-      ws.close();
-      term.dispose();
+      resizeObserver.disconnect();
+      if (ws) ws.close();
+      if (term) term.dispose();
+      termInstance.current = null;
+      fitAddonRef.current = null;
+      wsInstance.current = null;
     };
   }, [user]);
 
