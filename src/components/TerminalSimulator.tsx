@@ -40,7 +40,7 @@ export function TerminalSimulator() {
     term.loadAddon(fitAddon);
     term.open(terminalRef.current);
     
-    setTimeout(() => {
+    const initialFitTimeoutId = setTimeout(() => {
       try {
         if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
           fitAddon.fit();
@@ -114,6 +114,7 @@ export function TerminalSimulator() {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      clearTimeout(initialFitTimeoutId);
       window.removeEventListener('resize', handleResize);
       ws.close();
       term.dispose();
@@ -138,8 +139,9 @@ export function TerminalSimulator() {
   };
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     if (isExpanded && fitAddonRef.current) {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         try {
           if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
             fitAddonRef.current?.fit();
@@ -147,6 +149,7 @@ export function TerminalSimulator() {
         } catch (e) {}
       }, 50);
     }
+    return () => clearTimeout(timeoutId);
   }, [isExpanded]);
 
   return (
