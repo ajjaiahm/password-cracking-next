@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "clsx": "^2.1.1",
     "firebase": "^12.14.0",
     "firebase-admin": "^14.0.0",

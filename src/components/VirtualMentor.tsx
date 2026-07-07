@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLab } from '@/context/LabContext';
 import { useProgress, CHALLENGE_REWARDS } from '@/context/ProgressContext';
 import { Cpu, Send, Loader2, Sparkles } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface Message {
   id: string;
@@ -30,53 +29,85 @@ export function VirtualMentor() {
   const [chatInput, setChatInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-  const models = [
-    genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: AI_PROMPT }),
-    genAI.getGenerativeModel({ model: "gemini-2.0-flash", systemInstruction: AI_PROMPT }),
-  ];
-  let modelIndex = 0;
+  // Ollama AI helper (Non-streaming for challenges/validation)
+  async function callWithRetry(prompt: string): Promise<string> {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        systemPrompt: AI_PROMPT,
+        stream: false,
+      }),
+    });
 
-  function isQuotaError(err: any): boolean {
-    const msg = (err?.message || '').toLowerCase();
-    const status = err?.status || err?.code || 0;
-    return status === 429 ||
-      msg.includes('429') ||
-      msg.includes('quota') ||
-      msg.includes('rate limit') ||
-      msg.includes('resource exhausted') ||
-      msg.includes('exceeded');
-  }
-
-  function isOverloadError(err: any): boolean {
-    const msg = (err?.message || '').toLowerCase();
-    const status = err?.status || err?.code || 0;
-    return status === 503 || status === 500 || msg.includes('503') || msg.includes('500') || msg.includes('overload');
-  }
-
-  function isBadKeyError(err: any): boolean {
-    const msg = (err?.message || '').toLowerCase();
-    return msg.includes('api_key_invalid') || msg.includes('api key not valid') || msg.includes('api key not found');
-  }
-
-  async function callWithRetry(prompt: string, maxRetries = 3): Promise<string> {
-    for (let attempt = 0; attempt < maxRetries * models.length; attempt++) {
-      const mi = attempt % models.length;
-      const m = models[mi];
-      try {
-        const result = await m.generateContent(prompt);
-        return result.response.text();
-      } catch (err: any) {
-        if (isBadKeyError(err)) throw new Error('API_KEY_INVALID');
-        if (!isOverloadError(err) && !isQuotaError(err)) throw err;
-        if (attempt >= maxRetries * models.length - 1) throw err;
-        modelIndex = (mi + 1) % models.length;
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        await new Promise(r => setTimeout(r, delay));
-      }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `AI request failed: ${res.status}`);
     }
-    throw new Error('All API attempts exhausted');
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data.text;
+  }
+
+  // Streaming Ollama call for chat
+  async function streamAIResponse(
+    prompt: string,
+    onToken: (token: string) => void,
+    onDone: () => void,
+    onError: (msg: string) => void,
+    extraContext?: Record<string, any>
+  ) {
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          systemPrompt: AI_PROMPT,
+          stream: true,
+          labName: activeLab?.name,
+          labDifficulty: activeLab?.difficulty,
+          trackName: activeLab?.trackId,
+          currentSection: activeLab?.sections[currentSectionIndex]?.title,
+          currentSectionType: activeLab?.sections[currentSectionIndex]?.type,
+          currentCommand: activeLab?.sections[currentSectionIndex]?.command,
+          studentXP: progressData?.xp,
+          completedLabs: progressData?.completedLabs,
+          ...extraContext,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+        for (const line of lines) {
+          const data = line.slice(6);
+          if (data === '[DONE]') { onDone(); return; }
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.token) onToken(parsed.token);
+            if (parsed.error) { onError(parsed.error); return; }
+          } catch {}
+        }
+      }
+      onDone();
+    } catch (err: any) {
+      onError(err.message?.includes('AI server is offline')
+        ? 'AI server is offline. Make sure Ollama is running on the server.'
+        : 'Connection to AI failed. Please try again.'
+      );
+    }
   }
 
   // Clear messages when active lab changes
@@ -277,13 +308,9 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
       window.dispatchEvent(new CustomEvent('daily-challenge-ready'));
     } catch (error: any) {
       console.error("Challenge generation failed:", error);
-      const msg = isBadKeyError(error)
-        ? 'API key is invalid. Set a valid `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`. Get one at https://aistudio.google.com/apikey'
-        : isQuotaError(error)
-        ? 'Gemini API quota exceeded. The free tier has daily limits — wait until the quota resets or use a key with higher limits.'
-        : isOverloadError(error)
-        ? 'The AI service is temporarily overloaded. Please try generating the challenge again in a moment.'
-        : 'Failed to generate challenge. Please try again later.';
+      const msg = error?.message?.includes('AI server is offline') || error?.message?.includes('fetch failed')
+        ? 'Cannot reach the AI server. Make sure Ollama is running on the server.'
+        : 'Failed to generate challenge. The AI service may be busy — please try again.';
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         text: msg,
@@ -380,41 +407,38 @@ Respond with ONLY this JSON format (no markdown, no extra text):
     }]);
 
     setIsTyping(true);
+    const msgId = `stream-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: msgId,
+      text: '',
+      type: 'normal',
+      sender: 'Advisor'
+    }]);
 
     try {
-      const currentSection = activeLab?.sections[currentSectionIndex];
-      const activeLabInfo = activeLab 
-        ? `[Context: Active Lab is "${activeLab.name}" (Difficulty: ${activeLab.difficulty}). Current Section: "${currentSection?.title}". Expected Command: "${currentSection?.command || 'None'}"]` 
-        : '[Context: No active lab selected]';
+      const fullPrompt = `User question: ${userMsg}`;
       
-      const completedConcepts = progressData?.completedLabs?.length > 0 ? progressData.completedLabs.join(', ') : 'None';
-      const progressInfo = `[User Progress: XP=${progressData?.xp || 0}, Completed Labs=${completedConcepts}]`;
-      
-      const fullPrompt = `${activeLabInfo}\n${progressInfo}\nUser question: ${userMsg}`;
-      const responseText = await callWithRetry(fullPrompt);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: responseText,
-        type: 'normal',
-        sender: 'Advisor'
-      }]);
+      await streamAIResponse(
+        fullPrompt,
+        (token) => {
+          setMessages(prev => prev.map(m =>
+            m.id === msgId ? { ...m, text: m.text + token } : m
+          ));
+        },
+        () => setIsTyping(false),
+        (errMsg) => {
+          setIsTyping(false);
+          setMessages(prev => prev.map(m =>
+            m.id === msgId ? { ...m, text: errMsg, type: 'error', sender: 'System' } : m
+          ));
+        }
+      );
     } catch (error: any) {
-      console.error("Gemini API Error:", error);
-      const msg = isBadKeyError(error)
-        ? 'API key is invalid. Set a valid `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`. Get one at https://aistudio.google.com/apikey'
-        : isQuotaError(error)
-        ? 'Gemini API quota exceeded. The free tier has daily limits — wait until the quota resets or use a key with higher limits.'
-        : isOverloadError(error)
-        ? 'The AI service is temporarily overloaded. Please try your question again in a moment.'
-        : 'I am unable to connect to my reasoning servers at the moment. Please try again later.';
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: msg,
-        type: 'error',
-        sender: 'System'
-      }]);
-    } finally {
+      console.error("AI Error:", error);
       setIsTyping(false);
+      setMessages(prev => prev.map(m =>
+        m.id === msgId ? { ...m, text: 'I am unable to connect to my AI server at the moment. Please try again later.', type: 'error', sender: 'System' } : m
+      ));
     }
   };
 

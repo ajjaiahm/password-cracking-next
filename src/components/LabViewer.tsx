@@ -5,7 +5,6 @@ import { useLab } from '@/context/LabContext';
 import { useProgress } from '@/context/ProgressContext';
 import { LAB_DATA } from '@/data/labs';
 import toast from 'react-hot-toast';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DailyChallengePanel } from './DailyChallengePanel';
 import { 
   BookOpen, 
@@ -473,14 +472,11 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
 
 
   const validateAnswerWithAI = async (
-    question: string, 
-    acceptableAnswers: string[], 
+    question: string,
+    acceptableAnswers: string[],
     userAnswer: string
   ): Promise<{ isCorrect: boolean; feedback: string }> => {
     try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
       const prompt = `You are an AI cybersecurity expert and grading assistant for an interactive password cracking laboratory.
 The student has submitted an answer to the following question or challenge.
 
@@ -500,13 +496,23 @@ Guidelines:
 Generate a JSON response matching this exact structure:
 {
   "isCorrect": true or false,
-  "feedback": "A concise explanation (in the user's language if they wrote in another language, otherwise in English) acknowledging their approach and confirming why they are correct or guiding them if incorrect."
+  "feedback": "A concise explanation acknowledging their approach and confirming why they are correct or guiding them if incorrect."
 }
 
 Do not include any formatting other than the raw JSON string. Do not wrap in markdown \`\`\`json blocks.`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text().trim();
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, mode: 'validation' }),
+      });
+
+      if (!res.ok) throw new Error(`AI request failed: ${res.status}`);
+      
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const text = data.text.trim();
       const cleanText = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
       const parsed = JSON.parse(cleanText);
       return {
