@@ -90,14 +90,20 @@ export function TerminalSimulator({ height }: { height?: number }) {
           ws.send(data);
         }
         
-        if (data === '\r') {
-          const cmd = commandBuffer.current.trim();
-          checkCommandAgainstLab(cmd);
-          commandBuffer.current = '';
-        } else if (data === '\x7f') {
-          commandBuffer.current = commandBuffer.current.slice(0, -1);
-        } else if (data >= ' ' && data <= '~') {
-          commandBuffer.current += data;
+        // Strip bracketed paste escape sequences
+        const cleaned = data.replace(/\x1b\[20[01]~/g, '');
+        
+        for (let i = 0; i < cleaned.length; i++) {
+          const char = cleaned[i];
+          if (char === '\r') {
+            const cmd = commandBuffer.current.trim();
+            checkCommandAgainstLab(cmd);
+            commandBuffer.current = '';
+          } else if (char === '\x7f') {
+            commandBuffer.current = commandBuffer.current.slice(0, -1);
+          } else if (char >= ' ' && char <= '~') {
+            commandBuffer.current += char;
+          }
         }
       });
     };
