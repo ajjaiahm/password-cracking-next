@@ -312,17 +312,16 @@ CRITICAL: You MUST respond ONLY with a raw JSON object. Do not include markdown 
 
 Challenge type: ${type}
 Scenario: ${scenario}
-Expected correct answer: ${correctAnswer}
-User's submitted answer: ${userAnswer}
+Expected correct password: ${correctAnswer}
+User's submitted answer and explanation: ${userAnswer}
 
-Your job is to evaluate if the user's answer is correct. The user may answer in any language (English, Hindi, Telugu, Tamil, etc.) or use variations like the hash+password format (e.g., "hash:password" — in this case extract just the password part). Be flexible:
-- Accept if the answer matches the plaintext password exactly (case-insensitive)
-- Accept if the answer contains the correct password (e.g., "hash:password" format)
-- Accept transliterations or equivalent representations
-- Reject if clearly wrong
+Your job is to evaluate if the user found the correct password AND provided a reasonable explanation of how they cracked it (using the right tool/command).
+- Accept if the answer contains the correct password AND a basic explanation of their methodology.
+- The user may answer in any language.
+- Reject if the password is wrong, OR if they provide no explanation of how they got it.
 
 Respond with ONLY this JSON format (no markdown, no extra text):
-{"isCorrect": true/false, "feedback": "brief encouraging feedback in 1-2 sentences"}`;
+{"isCorrect": true/false, "feedback": "brief encouraging feedback in 1-2 sentences explaining why they are correct or what they missed"}`;
 
       const text = await callWithRetry(prompt);
       // Strip markdown code fences if present
