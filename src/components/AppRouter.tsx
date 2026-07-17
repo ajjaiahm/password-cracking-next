@@ -77,23 +77,29 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (delta: number) => void; onDragStart?: () => void; onDragEnd?: () => void; position: 'left' | 'right' }) {
+function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (delta: number) => void; onDragStart?: () => void; onDragEnd?: () => void; position: 'left' | 'right' | 'top' | 'bottom' }) {
   const dragging = useRef(false);
-  const startX = useRef(0);
+  const startPos = useRef(0);
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     dragging.current = true;
-    startX.current = e.clientX;
+    startPos.current = (position === 'left' || position === 'right') ? e.clientX : e.clientY;
     onDragStart?.();
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = (position === 'left' || position === 'right') ? 'col-resize' : 'row-resize';
     document.body.style.userSelect = 'none';
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
-      const delta = ev.clientX - startX.current;
-      startX.current = ev.clientX;
-      onDrag(position === 'right' ? -delta : delta);
+      const currentPos = (position === 'left' || position === 'right') ? ev.clientX : ev.clientY;
+      const delta = currentPos - startPos.current;
+      startPos.current = currentPos;
+      
+      if (position === 'right' || position === 'bottom') {
+        onDrag(-delta);
+      } else {
+        onDrag(delta);
+      }
     };
 
     const onMouseUp = () => {
@@ -101,21 +107,26 @@ function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (d
       onDragEnd?.();
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }, [onDrag, onDragStart, onDragEnd, position]);
+
+  const isVertical = position === 'top' || position === 'bottom';
 
   return (
     <div
       onMouseDown={onMouseDown}
-      data-resize-handle
-      className="hidden md:block w-1 hover:w-1.5 bg-transparent hover:bg-cyan-800/30 cursor-col-resize shrink-0 transition-all duration-150 relative z-20 group"
+      className={`group shrink-0 flex items-center justify-center transition-colors relative z-20 ${
+        isVertical ? 'h-2 w-full cursor-row-resize hover:bg-zinc-800' : 'w-2 h-full cursor-col-resize hover:bg-zinc-800'
+      }`}
     >
-      <div className="absolute inset-y-0 -left-1 -right-1" />
+      <div className={`rounded-full bg-zinc-700 group-hover:bg-zinc-500 transition-colors ${
+        isVertical ? 'w-8 h-1' : 'w-1 h-8'
+      }`} />
     </div>
   );
 }
@@ -148,6 +159,14 @@ function WorkspaceLayout() {
     }
     return 340;
   });
+  
+  const [terminalHeight, setTerminalHeight] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = parseInt(localStorage.getItem('pcl_terminal_height') || '350', 10);
+      return Math.min(saved, Math.max(100, window.innerHeight * 0.6));
+    }
+    return 350;
+  });
 
   // Track window resize for responsive layout
   useEffect(() => {
@@ -168,6 +187,10 @@ function WorkspaceLayout() {
   useEffect(() => {
     localStorage.setItem('pcl_right_panel_width', String(rightPanelWidth));
   }, [rightPanelWidth]);
+
+  useEffect(() => {
+    localStorage.setItem('pcl_terminal_height', String(terminalHeight));
+  }, [terminalHeight]);
 
   // Clear resizing flag after drag finishes
   useEffect(() => {
@@ -282,7 +305,13 @@ function WorkspaceLayout() {
               className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-zinc-800 flex flex-col bg-zinc-900/60 ${smoothClass}`}
             >
               <VirtualMentor />
-              <TerminalSimulator />
+              <ResizeHandle 
+                onDrag={(delta) => { setIsResizing(true); setTerminalHeight(h => clamp(h - delta, 100, window.innerHeight - 200)); }}
+                onDragStart={() => setIsResizing(true)}
+                onDragEnd={() => setIsResizing(false)}
+                position="top"
+              />
+              <TerminalSimulator height={terminalHeight} />
             </div>
           </div>
         </div>

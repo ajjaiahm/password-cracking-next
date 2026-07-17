@@ -20,7 +20,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up an unprivileged 'operator' user with sudo access
-RUN useradd -m -s /bin/bash operator && \
+RUN useradd -m -s /bin/bash -g operator operator && \
     echo "operator:operator" | chpasswd && \
     adduser operator sudo
 

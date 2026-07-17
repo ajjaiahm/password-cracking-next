@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLab } from '@/context/LabContext';
 import { useProgress, CHALLENGE_REWARDS } from '@/context/ProgressContext';
-import { Cpu, Send, Loader2, Sparkles } from 'lucide-react';
+import { Cpu, Send, Loader2, Sparkles, Square } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -28,6 +28,7 @@ export function VirtualMentor() {
   const [isTyping, setIsTyping] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Ollama AI helper (Non-streaming for challenges/validation)
   async function callWithRetry(prompt: string): Promise<string> {
@@ -57,12 +58,14 @@ export function VirtualMentor() {
     onToken: (token: string) => void,
     onDone: () => void,
     onError: (msg: string) => void,
+    abortSignal?: AbortSignal,
     extraContext?: Record<string, any>
   ) {
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortSignal,
         body: JSON.stringify({
           prompt,
           systemPrompt: AI_PROMPT,
@@ -103,6 +106,10 @@ export function VirtualMentor() {
       }
       onDone();
     } catch (err: any) {
+      if (err.name === 'AbortError') {
+        onDone();
+        return;
+      }
       onError(err.message?.includes('AI server is offline')
         ? 'AI server is offline. Make sure Ollama is running on the server.'
         : 'Connection to AI failed. Please try again.'
@@ -212,75 +219,50 @@ export function VirtualMentor() {
       const completedConcepts = progressData?.completedLabs?.length > 0 ? progressData.completedLabs.join(', ') : 'None';
       const prompt = `Generate a unique, realistic ${toolName} password cracking challenge for a cybersecurity student. The reward for solving this is ${reward} coins.
 
+Seed for Uniqueness: ${crypto.randomUUID()}
+Ensure this challenge is completely different from any previous ones!
+
 User's Current Progress:
 - Experience Points (XP): ${progressData?.xp || 0}
-- Completed Lab Modules (Concepts Learned): ${completedConcepts}
+- Completed Lab Modules: ${completedConcepts}
 
-Create a challenge that includes:
-1. A realistic, lengthy, and hands-on scenario (3-4 paragraphs describing the audit context).
-2. For Hydra and Wireshark/PCAP, the challenge MUST be significantly harder and more involved. Do not just use basic default commands; require multi-step analysis, complex flags, non-standard ports, or deep packet inspection based on their progress.
-3. Dummy credentials or a hash that needs to be cracked (use a REAL hash format, not a placeholder).
-4. The correct answer (the plaintext password or credential — use a common real-world password).
-5. 3 progressive hints — each hint must be a SPECIFIC ACTIONABLE STEP, not generic advice.
+REQUIREMENTS:
+1. Provide a realistic scenario (3-4 paragraphs describing the audit context). Include markdown links to reference documentation like [Hashcat Wiki](https://hashcat.net/wiki/).
+2. For Hydra and Wireshark/PCAP, require complex multi-step analysis or non-standard ports.
+3. Provide dummy credentials or a hash (use REAL formats, not placeholders).
+4. Provide the correct plaintext password answer.
+5. Provide 3 progressive hints:
+   - Hint 1: What type of hash/credential and what tool to use.
+   - Hint 2: The exact command with parameters filled in.
+   - Hint 3: The exact command to show the result and the expected answer format.
 
-IMPORTANT — Hint quality rules:
-- Hint 1 (subtle): Tell the user EXACTLY what type of hash/credential they have and what tool to use. Include the specific file they need to create and the exact wordlist path.
-- Hint 2 (moderate): Give the EXACT command to run with all parameters filled in using the actual data. Tell them what to look for in the output.
-- Hint 3 (explicit): Give the EXACT command to show the cracked result. Tell them the format of the answer (e.g., "the part after the colon" or "the value after password=").
-
-Format your response as follows:
-
-## Challenge: [Title]
-
-### Scenario
-[realistic scenario text with context about the audit]
-
-### Target Data
-- [key]: [value]
-- [key]: [value]
-
-### Reference Documentation
-Include links to relevant official documentation using markdown format like [Hashcat Wiki](https://hashcat.net/wiki/).
-
----CHALLENGE_ANSWER---
-[the plaintext password / credential]
----CHALLENGE_DATA_START---
-[{"label":"Hash / Target","value":"actual_hash_value"},{"label":"Username","value":"admin"}]
----CHALLENGE_DATA_END---
----HINTS_START---
-Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specific actionable step
----HINTS_END---`;
+CRITICAL: You MUST respond ONLY with a raw JSON object. Do not include markdown code blocks (\`\`\`) or ANY other text.
+{
+  "title": "String, e.g. Domain Hash Extraction",
+  "scenario": "String, the full scenario text with references",
+  "targetData": [{"label": "String, e.g. Hash", "value": "String, actual data"}],
+  "correctAnswer": "String, the plaintext answer",
+  "hints": ["String hint 1", "String hint 2", "String hint 3"]
+}`;
 
       const text = await callWithRetry(prompt);
-
-      // Parse answer
-      const answerMatch = text.match(/---CHALLENGE_ANSWER---\n?([\s\S]*?)\n?---CHALLENGE_DATA_START---/);
-      const correctAnswer = answerMatch ? answerMatch[1].trim() : '';
-
-      // Parse dummy data
-      const dataMatch = text.match(/---CHALLENGE_DATA_START---\n?([\s\S]*?)\n?---CHALLENGE_DATA_END---/);
-      let dummyData: Array<{ label: string; value: string }> = [{ label: 'Target', value: '' }];
-      if (dataMatch) {
-        try { dummyData = JSON.parse(dataMatch[1].trim()); } catch {}
+      
+      let parsedJson: any;
+      try {
+        const cleaned = text.replace(/```json\n?|```\n?/g, '').trim();
+        parsedJson = JSON.parse(cleaned);
+      } catch (err) {
+        console.error("Failed to parse JSON challenge:", text);
+        throw new Error("Failed to parse AI challenge. The model returned an invalid format. Please try again.");
       }
 
-      // Parse hints
-      const hintsMatch = text.match(/---HINTS_START---\n?([\s\S]*?)\n?---HINTS_END---/);
-      let hints = ['Review the target data carefully.', 'Try common wordlists like rockyou.txt.', 'Use rule-based attacks with best64.rule.'];
-      if (hintsMatch) {
-        hints = hintsMatch[1].split('|').map(h => h.trim()).filter(Boolean);
-      }
+      const title = parsedJson.title || `${toolName} Challenge`;
+      const scenario = parsedJson.scenario || "Scenario details missing.";
+      const dummyData = parsedJson.targetData || [{ label: 'Target', value: 'Data unavailable' }];
+      const correctAnswer = parsedJson.correctAnswer || "admin";
+      const hints = parsedJson.hints || ['Review the target data carefully.', 'Try common wordlists like rockyou.txt.', 'Check tool parameters.'];
 
-      // Display text (remove tags)
-      const displayText = text
-        .replace(/---CHALLENGE_ANSWER---[\s\S]*?---CHALLENGE_DATA_START---/, '')
-        .replace(/---CHALLENGE_DATA_START---[\s\S]*?---CHALLENGE_DATA_END---/, '')
-        .replace(/---HINTS_START---[\s\S]*?---HINTS_END---/, '')
-        .trim();
-
-      const title = displayText.match(/## Challenge:\s*(.+)/)?.[1]?.trim() || `${toolName} Challenge`;
-      const scenarioMatch = displayText.match(/### Scenario\s*([\s\S]*?)(?=### Target Data|### Reference|$)/);
-      const scenario = scenarioMatch ? scenarioMatch[1].trim() : displayText;
+      const displayText = `## Challenge: ${title}\n\n### Scenario\n${scenario}\n\n### Target Data\n${dummyData.map((d: any) => `- ${d.label}: ${d.value}`).join('\n')}`;
 
       const challengeData = {
         id: `${type}_${Date.now()}`,
@@ -299,7 +281,7 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
       await setDailyChallenge(challengeData);
 
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         text: displayText,
         type: 'normal',
         sender: 'Advisor'
@@ -312,7 +294,7 @@ Hint 1: specific actionable step|Hint 2: specific actionable step|Hint 3: specif
         ? 'Cannot reach the AI server. Make sure Ollama is running on the server.'
         : 'Failed to generate challenge. The AI service may be busy — please try again.';
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         text: msg,
         type: 'error',
         sender: 'System'
@@ -385,7 +367,7 @@ Respond with ONLY this JSON format (no markdown, no extra text):
     setTimeout(() => {
       setIsTyping(false);
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         text, type, sender
       }]);
     }, delay);
@@ -400,7 +382,7 @@ Respond with ONLY this JSON format (no markdown, no extra text):
     
     // Add user message to log
     setMessages(prev => [...prev, {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       text: userMsg,
       type: 'normal',
       sender: 'Operator' as any
@@ -414,6 +396,8 @@ Respond with ONLY this JSON format (no markdown, no extra text):
       type: 'normal',
       sender: 'Advisor'
     }]);
+
+    abortControllerRef.current = new AbortController();
 
     try {
       const fullPrompt = `User question: ${userMsg}`;
@@ -431,7 +415,8 @@ Respond with ONLY this JSON format (no markdown, no extra text):
           setMessages(prev => prev.map(m =>
             m.id === msgId ? { ...m, text: errMsg, type: 'error', sender: 'System' } : m
           ));
-        }
+        },
+        abortControllerRef.current.signal
       );
     } catch (error: any) {
       console.error("AI Error:", error);
@@ -440,6 +425,14 @@ Respond with ONLY this JSON format (no markdown, no extra text):
         m.id === msgId ? { ...m, text: 'I am unable to connect to my AI server at the moment. Please try again later.', type: 'error', sender: 'System' } : m
       ));
     }
+  };
+
+  const stopGenerating = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsTyping(false);
   };
 
   useEffect(() => {
@@ -512,16 +505,29 @@ Respond with ONLY this JSON format (no markdown, no extra text):
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             disabled={isTyping}
-            placeholder="Ask the advisor a question..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-700 disabled:opacity-50"
+            placeholder={isTyping ? "Advisor is typing..." : "Ask the advisor a question..."}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-700 disabled:opacity-50 pr-16"
           />
-          <button 
-            type="submit" 
-            disabled={isTyping || !chatInput.trim()}
-            className="absolute right-2 text-zinc-500 hover:text-zinc-300 disabled:opacity-50 transition-colors"
-          >
-            {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          </button>
+          <div className="absolute right-3 flex items-center gap-1">
+            {isTyping ? (
+              <button 
+                type="button" 
+                onClick={stopGenerating}
+                className="p-1.5 text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded transition-colors flex items-center justify-center"
+                title="Stop generating"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+              </button>
+            ) : (
+              <button 
+                type="submit" 
+                disabled={!chatInput.trim()}
+                className="p-1.5 text-zinc-500 hover:text-zinc-300 disabled:opacity-50 transition-colors flex items-center justify-center"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </aside>

@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLab } from '@/context/LabContext';
 import { ChevronDown, ChevronUp, Terminal as TerminalIcon, Maximize2, Minimize2 } from 'lucide-react';
 
-export function TerminalSimulator() {
+export function TerminalSimulator({ height }: { height?: number }) {
   const { user } = useAuth();
   const { expectedSection, onCommandExecutedSuccess } = useLab();
   
@@ -158,7 +158,10 @@ export function TerminalSimulator() {
   }, [isExpanded]);
 
   return (
-    <div className={`flex flex-col border-t border-zinc-800 bg-zinc-950 transition-all duration-300 ease-in-out ${isExpanded ? 'flex-1 md:flex-none md:h-1/2' : 'h-10'}`}>
+    <div 
+      className={`flex flex-col border-t border-zinc-800 bg-zinc-950 transition-all duration-300 ease-in-out ${isExpanded ? 'flex-1 md:flex-none' : 'h-10 shrink-0'}`}
+      style={isExpanded && height ? { height } : undefined}
+    >
       {/* Header */}
       <div 
         className="h-10 px-4 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between cursor-pointer hover:bg-zinc-800/50 transition-colors"
