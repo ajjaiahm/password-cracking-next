@@ -14,7 +14,7 @@ import { VirtualMentor } from './VirtualMentor';
 import { TerminalSimulator } from './TerminalSimulator';
 import { AuthScreens } from './AuthScreens';
 import { AccountSetupPage } from './AccountSetupPage';
-import { HackerBackground } from './HackerBackground';
+import { AntigravityBackground } from './AntigravityBackground';
 import { Toaster } from 'react-hot-toast';
 import { Menu } from 'lucide-react';
 
@@ -204,10 +204,10 @@ function WorkspaceLayout() {
 
   return (
     <LabProvider>
-      <main className="flex h-screen w-full overflow-hidden relative bg-zinc-950 text-zinc-100">
+      <main className="flex h-screen w-full overflow-hidden relative bg-black text-white">
         
         {/* Cursor Reactive Grid Canvas */}
-        <HackerBackground />
+        <AntigravityBackground />
         
         {/* Dashboard Overlay */}
         <Dashboard isOpen={isDashboardOpen} onClose={() => setIsDashboardOpen(false)} />
@@ -249,21 +249,21 @@ function WorkspaceLayout() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10 bg-transparent overflow-hidden">
           
           {/* Mobile Header */}
-          <div className="md:hidden h-14 border-b border-zinc-800/80 flex items-center justify-between px-4 bg-zinc-900/80 backdrop-blur-xl shrink-0">
+          <div className="md:hidden h-14 border-b border-[#262626]/80 flex items-center justify-between px-4 bg-[#171717]/80 backdrop-blur-xl shrink-0">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsMobileOpen(true)}
-                className="text-zinc-400 hover:text-zinc-100 transition-colors p-1 rounded"
+                className="text-gray-400 hover:text-white transition-colors p-1 rounded"
                 aria-label="Open navigation menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <span className="font-mono font-bold text-xs tracking-widest text-zinc-300">PCL</span>
+              <span className="font-mono font-bold text-xs tracking-widest text-gray-300">PCL</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsDashboardOpen(true)}
-                className="text-zinc-400 hover:text-zinc-100 transition-colors p-1.5 rounded border border-zinc-800"
+                className="text-gray-400 hover:text-white transition-colors p-1.5 rounded border border-[#262626]"
                 aria-label="Dashboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,7 +272,7 @@ function WorkspaceLayout() {
               </button>
               <button
                 onClick={() => setIsLeaderboardOpen(true)}
-                className="text-amber-500 hover:text-amber-400 transition-colors p-1.5 rounded border border-zinc-800"
+                className="text-blue-400 hover:text-amber-400 transition-colors p-1.5 rounded border border-[#262626]"
                 aria-label="Leaderboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,7 +302,7 @@ function WorkspaceLayout() {
             {/* Right panel: Mentor + Terminal — stacks below on mobile */}
             <div 
               style={{ width: isMobile ? '100%' : rightPanelWidth }}
-              className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-zinc-800 flex flex-col bg-zinc-900/60 ${smoothClass}`}
+              className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-[#262626] flex flex-col bg-[#171717]/60 ${smoothClass}`}
             >
               <VirtualMentor />
               <ResizeHandle 

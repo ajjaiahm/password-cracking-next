@@ -1,35 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Professional IDE Theme (LeetCode / Discord Style) ── */
+  /* ── Antigravity Theme (Deep Dark + Blue Accents) ── */
   
-  /* Core backgrounds */
-  --color-background: #1a1a1a;
-  --color-foreground: #eff2f6;
+  /* Antigravity Base Palette */
+  --color-ag-bg: #0a0a0a;       /* Deepest background */
+  --color-ag-panel: #171717;    /* Surface panels */
+  --color-ag-border: #262626;   /* Subtle borders */
   
-  /* Accent palette */
-  --color-accent-orange: #ffa116;
-  --color-accent-green: #2cbb5d;
-  --color-accent-red: #ef4743;
-  --color-accent-dim: #8c8c8c;
+  /* Antigravity Accent Palette */
+  --color-ag-accent: #3b82f6;   /* Electric Blue */
+  --color-ag-glow: #8b5cf6;     /* Purple/Blue Glow */
+  --color-ag-accent-hover: #60a5fa;
+  --color-ag-accent-dim: rgba(59, 130, 246, 0.2);
+  
+  /* Core defaults */
+  --color-background: var(--color-ag-bg);
+  --color-foreground: #ffffff;
+  
+  /* Accent defaults */
+  --color-accent-blue: var(--color-ag-accent);
+  --color-accent-dim: #a3a3a3;
   
   /* Surface layers */
-  --color-bg-panel: rgba(40, 40, 40, 0.95);
-  --color-bg-card: #282828;
-  --color-bg-surface: #1e1e1e;
-  --color-border-glass: rgba(255, 255, 255, 0.08);
-  --color-border-active: rgba(255, 161, 22, 0.4);
-  --color-terminal-bg: #141414;
+  --color-bg-panel: rgba(23, 23, 23, 0.95);
+  --color-bg-card: var(--color-ag-border);
+  --color-bg-surface: var(--color-ag-panel);
+  --color-border-glass: rgba(255, 255, 255, 0.1);
+  --color-border-active: rgba(59, 130, 246, 0.5);
+  --color-terminal-bg: #000000;
   
   /* Glow effects */
-  --glow-accent: 0 0 10px rgba(255, 161, 22, 0.15);
+  --glow-accent: 0 0 15px rgba(59, 130, 246, 0.25);
   
-  /* Fonts — use CSS variables injected by Next.js font loader */
-  --font-mono: var(--font-jetbrains, 'JetBrains Mono', 'Fira Code', 'Consolas', monospace);
-  --font-sans: var(--font-inter, 'Inter', system-ui, sans-serif);
+  /* Fonts */
+  --font-mono: 'Consolas', 'Courier New', monospace;
+  --font-sans: 'Inter', 'Segoe UI', sans-serif;
 }
 
-/* Custom Scrollbar — Clean Dark Style */
+/* Custom Scrollbar — Dark Navy/Orange Style */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -38,11 +47,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3e3e3e;
+  background: var(--color-zinc-700);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
+  background: #ff7e00;
 }
 
 @layer base {
@@ -52,11 +61,9 @@
   }
 
   html {
-    /* Enable smooth scrolling, prevent text size adjust on rotate */
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    /* Smooth font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -64,28 +71,23 @@
   body {
     @apply bg-[var(--color-background)] text-[var(--color-foreground)] antialiased overflow-hidden;
     font-family: var(--font-sans);
-    /* Support iOS safe areas (notch, home indicator) */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    /* Prevent pull-to-refresh and bounce on iOS */
     overscroll-behavior: none;
-    /* Improve touch scrolling */
     -webkit-overflow-scrolling: touch;
   }
   
   ::selection {
-    background: rgba(88, 101, 242, 0.3);
+    background: rgba(255, 126, 0, 0.3);
     color: #ffffff;
   }
 
-  /* Ensure inputs and buttons inherit font properly on mobile */
   input, button, textarea, select {
     font-family: inherit;
   }
   
-  /* Make all tap targets at least 44px for accessibility */
   button, a, [role="button"] {
     min-height: 44px;
     display: inline-flex;
@@ -93,9 +95,15 @@
     justify-content: center;
   }
 
-  /* Override min-height for flex/grid children that have explicit sizing */
   .no-min-h button {
     min-height: unset;
+  }
+
+  /* ── GLOBAL SMOOTH TRANSITIONS ── */
+  a, button, input, textarea, select, .glass-card, [role="button"], svg, span {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
   }
 }
 
@@ -105,10 +113,10 @@
   }
   
   .glass-card {
-    @apply bg-[var(--color-bg-card)] border border-[var(--color-border-glass)] shadow-md transition-all duration-200 rounded-lg;
+    @apply bg-[var(--color-bg-card)] border border-[var(--color-border-glass)] shadow-md transition-all duration-300 rounded-lg;
   }
   .glass-card:hover {
-    border-color: rgba(88, 101, 242, 0.3);
+    border-color: rgba(255, 126, 0, 0.4);
     box-shadow: var(--glow-accent);
   }
   
@@ -116,16 +124,14 @@
     @apply font-mono text-sm leading-relaxed;
   }
 
-  /* Safe-area-aware paddings for iOS devices */
   .safe-top    { padding-top: env(safe-area-inset-top); }
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .safe-left   { padding-left: env(safe-area-inset-left); }
   .safe-right  { padding-right: env(safe-area-inset-right); }
 
-  /* Custom scrollbar shorthand */
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #3e3e3e transparent;
+    scrollbar-color: var(--color-zinc-700) transparent;
     -webkit-overflow-scrolling: touch;
   }
 }
@@ -135,7 +141,7 @@
   display: inline-block;
   width: 4px;
   height: 4px;
-  background-color: #b5bac1;
+  background-color: var(--color-zinc-400);
   border-radius: 50%;
   margin: 0 1.5px;
   animation: typing 1.4s infinite ease-in-out both;

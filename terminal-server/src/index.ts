@@ -138,6 +138,7 @@ async function getOrCreateContainer(userId: string) {
         Cmd: ['/bin/bash'],
         HostConfig: {
           AutoRemove: false,
+          Binds: [`pcl-lab-vol-${userId}:/home/operator`],
           Memory: 512 * 1024 * 1024,       // 512 MB RAM limit
           NanoCpus: 500_000_000,            // 0.5 CPU limit
           PidsLimit: 100,                   // max 100 processes per container
@@ -204,12 +205,12 @@ wss.on('connection', async (ws: WebSocket, req: http.IncomingMessage) => {
     ws.send(`\r\n\x1b[33m[System] Initializing isolated container for user ${userId}...\x1b[0m\r\n`);
     const container = await getOrCreateContainer(userId);
 
-    // Create an exec session for bash
     const exec = await container.exec({
       AttachStdin: true,
       AttachStdout: true,
       AttachStderr: true,
       Tty: true,
+      Env: ['TERM=xterm'],
       Cmd: ['/bin/bash'],
     });
 

@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
           model: OLLAMA_MODEL,
           prompt: fullPrompt,
           stream: false,
-          options: { temperature: 0.1, num_predict: 600 },
+          options: { temperature: 0.1, num_predict: 600, stop: ['USER:', '\nUser:', 'System:', '\nUser question:'] },
         }),
       });
 
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
         model: OLLAMA_MODEL,
         prompt: fullPrompt,
         stream: true,
-        options: { temperature: 0.7, num_predict: 1200, top_p: 0.9 },
+        options: { temperature: 0.7, num_predict: 1200, top_p: 0.9, stop: ['USER:', '\nUser:', 'System:', '\nUser question:'] },
       }),
     });
 

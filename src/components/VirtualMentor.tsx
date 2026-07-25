@@ -451,15 +451,15 @@ Respond with ONLY this JSON format (no markdown, no extra text):
   };
 
   return (
-    <aside className="bg-zinc-900 flex flex-col flex-1 min-h-0 overflow-hidden shrink-0 font-sans border-b border-zinc-800">
+    <aside className="bg-[#171717] flex flex-col flex-1 min-h-0 overflow-hidden shrink-0 font-sans border-b border-[#262626]">
       {/* Mentor Header */}
-      <div className="p-4 border-b border-zinc-800 flex items-center gap-3 bg-zinc-950/20">
-        <div className="w-8 h-8 rounded border border-zinc-800 flex items-center justify-center bg-zinc-950 text-zinc-400">
-          <Cpu className="w-4 h-4 text-zinc-400" />
+      <div className="p-4 border-b border-[#262626] flex items-center gap-3 bg-black/20">
+        <div className="w-8 h-8 rounded border border-[#262626] flex items-center justify-center bg-black text-gray-400">
+          <Cpu className="w-4 h-4 text-gray-400" />
         </div>
         <div>
           <div className="font-mono text-xs font-bold text-zinc-200">Advisor Agent</div>
-          <div className="text-[9px] font-mono flex items-center gap-1.5 text-zinc-500 uppercase tracking-wider mt-0.5">
+          <div className="text-[9px] font-mono flex items-center gap-1.5 text-gray-400 uppercase tracking-wider mt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
             Auditor Mode
           </div>
@@ -467,19 +467,19 @@ Respond with ONLY this JSON format (no markdown, no extra text):
       </div>
       
       {/* Dialogue List */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar bg-zinc-950/10">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar bg-black/10">
         {messages.map(msg => (
           <div key={msg.id} className={`
             p-3 rounded border text-xs font-mono
-            ${msg.type === 'normal' ? 'bg-zinc-900/40 border-zinc-800 text-zinc-400' : ''}
-            ${msg.type === 'hint' ? 'bg-amber-950/15 border-amber-900/60 text-amber-500' : ''}
-            ${msg.type === 'success' ? 'bg-emerald-950/15 border-emerald-900/60 text-emerald-400' : ''}
+            ${msg.type === 'normal' ? 'bg-[#171717]/40 border-[#262626] text-gray-400' : ''}
+            ${msg.type === 'hint' ? 'bg-amber-950/15 border-amber-900/60 text-blue-400' : ''}
+            ${msg.type === 'success' ? 'bg-emerald-950/15 border-emerald-900/60 text-blue-400' : ''}
             ${msg.type === 'error' ? 'bg-red-950/20 border-red-900/60 text-red-400' : ''}
           `}>
             <div className={`text-[9px] uppercase tracking-wider font-bold mb-1 opacity-80
-              ${msg.type === 'normal' ? 'text-zinc-500' : ''}
+              ${msg.type === 'normal' ? 'text-gray-400' : ''}
               ${msg.type === 'hint' ? 'text-amber-600' : ''}
-              ${msg.type === 'success' ? 'text-emerald-500' : ''}
+              ${msg.type === 'success' ? 'text-blue-500' : ''}
               ${msg.type === 'error' ? 'text-red-500' : ''}
             `}>{msg.sender}</div>
             <div className="leading-relaxed font-mono">{renderText(msg.text)}</div>
@@ -487,8 +487,8 @@ Respond with ONLY this JSON format (no markdown, no extra text):
         ))}
 
         {isTyping && (
-          <div className="p-3 rounded border bg-zinc-900 border-zinc-800 inline-block">
-            <div className="text-[9px] font-mono uppercase tracking-wider font-bold mb-1 opacity-60 text-zinc-500">Advisor</div>
+          <div className="p-3 rounded border bg-[#171717] border-[#262626] inline-block">
+            <div className="text-[9px] font-mono uppercase tracking-wider font-bold mb-1 opacity-60 text-gray-400">Advisor</div>
             <div className="typing-indicator flex items-center h-3">
               <span></span><span></span><span></span>
             </div>
@@ -497,7 +497,7 @@ Respond with ONLY this JSON format (no markdown, no extra text):
       </div>
 
       {/* Chat Input Area */}
-      <div className="p-3 border-t border-zinc-800 bg-zinc-950/40">
+      <div className="p-3 border-t border-[#262626] bg-black/40">
         <form onSubmit={handleChatSubmit} className="flex items-center gap-2 relative">
           <input 
             type="text" 
@@ -505,7 +505,7 @@ Respond with ONLY this JSON format (no markdown, no extra text):
             onChange={(e) => setChatInput(e.target.value)}
             disabled={isTyping}
             placeholder={isTyping ? "Advisor is typing..." : "Ask the advisor a question..."}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-700 disabled:opacity-50 pr-16"
+            className="w-full bg-[#171717] border border-[#262626] rounded px-3 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-700 disabled:opacity-50 pr-16"
           />
           <div className="absolute right-3 flex items-center gap-1">
             {isTyping ? (
@@ -521,7 +521,7 @@ Respond with ONLY this JSON format (no markdown, no extra text):
               <button 
                 type="submit" 
                 disabled={!chatInput.trim()}
-                className="p-1.5 text-zinc-500 hover:text-zinc-300 disabled:opacity-50 transition-colors flex items-center justify-center"
+                className="p-1.5 text-gray-400 hover:text-gray-300 disabled:opacity-50 transition-colors flex items-center justify-center"
               >
                 <Send className="w-4 h-4" />
               </button>
