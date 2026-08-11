@@ -346,12 +346,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!tmpPwd || !uid) throw new Error('Verification session expired or link is invalid. Please restart registration.');
 
     try {
+      const cred = await signInWithEmailAndPassword(auth, email, tmpPwd);
+
       // Check if this is the first user — limit(1) avoids reading all docs
+      // (Must happen after sign in so that firestore.rules allow read)
       const firstUserQ = query(collection(db, 'users'), limit(1));
       const firstUserSnap = await getDocs(firstUserQ);
       const isFirstUser = firstUserSnap.empty;
 
-      const cred = await signInWithEmailAndPassword(auth, email, tmpPwd);
       await updatePassword(cred.user, password);
       // Save profile to Firestore
       const userRef = doc(db, 'users', uid);

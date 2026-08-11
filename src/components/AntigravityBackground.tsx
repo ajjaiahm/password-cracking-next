@@ -66,7 +66,7 @@ export function AntigravityBackground() {
         const sx = (this.x / this.z) * width + cx;
         const sy = (this.y / this.z) * height + cy;
         
-        const r = (1 - this.z / width) * this.size * 2;
+        const r = Math.max(0, (1 - this.z / width) * this.size * 2);
         
         c.beginPath();
         c.arc(sx, sy, r, 0, Math.PI * 2);

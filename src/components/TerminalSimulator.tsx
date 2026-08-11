@@ -43,6 +43,10 @@ export function TerminalSimulator({ height }: { height?: number }) {
 
     const initTerminal = () => {
       if (initialized || !terminalRef.current) return;
+      if (terminalRef.current.clientWidth === 0) {
+        setTimeout(initTerminal, 100);
+        return;
+      }
       
       initialized = true;
 
@@ -64,13 +68,13 @@ export function TerminalSimulator({ height }: { height?: number }) {
       setTimeout(() => {
         if (isDisposed) return;
         try {
-          if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+          if (term?.element && term.element.clientWidth > 0) {
             fitAddon?.fit();
           }
         } catch (e) {
           console.warn('Initial fit warning:', e);
         }
-      }, 50);
+      }, 100);
       
       termInstance.current = term;
       fitAddonRef.current = fitAddon;
@@ -79,9 +83,10 @@ export function TerminalSimulator({ height }: { height?: number }) {
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const isDevServer = window.location.port === '3000';
+      const hostName = window.location.hostname;
+      const isDevServer = process.env.NODE_ENV === 'development';
       const wsUrl = isDevServer 
-        ? `ws://localhost:4000/?userId=${user.uid}`
+        ? `ws://${hostName}:4000/?userId=${user.uid}`
         : `${protocol}//${host}/api/terminal/?userId=${user.uid}`;
         
       ws = new WebSocket(wsUrl);
@@ -143,8 +148,8 @@ export function TerminalSimulator({ height }: { height?: number }) {
     const resizeObserver = new ResizeObserver(() => {
       if (isDisposed) return;
       try {
-        if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
-          fitAddon?.fit();
+        if (termInstance.current?.element && termInstance.current.element.clientWidth > 0) {
+          fitAddonRef.current?.fit();
         }
       } catch (e) {}
     });
@@ -173,11 +178,11 @@ export function TerminalSimulator({ height }: { height?: number }) {
     if (isExpanded && fitAddonRef.current) {
       timeoutId = setTimeout(() => {
         try {
-          if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+          if (termInstance.current?.element && termInstance.current.element.clientWidth > 0) {
             fitAddonRef.current?.fit();
           }
         } catch (e) {}
-      }, 50);
+      }, 100);
     }
     return () => clearTimeout(timeoutId);
   }, [isExpanded]);

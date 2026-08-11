@@ -369,17 +369,17 @@ export const LAB_DATA: Track[] = [
           },
           {
             type: 'command',
-            title: 'Step 1: Install Auditing Tools',
-            command: 'sudo apt install hashcat john -y',
-            explanation: '<p>Install both utilities into the local system environment.</p>',
-            expectedOutput: 'Reading package lists... Done<br>Installing packages: hashcat, john... Done<br>Linking binary configurations.',
-            outputExplanation: 'Auditing tools are installed.'
+            title: 'Step 1: Download Target Wordlist',
+            command: 'wget https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/10-million-password-list-top-1000.txt -O wordlist.txt',
+            explanation: '<p>Instead of relying on a tiny mock dictionary, download a realistic top-1000 common passwords dictionary from SecLists using <code>wget</code>.</p>',
+            expectedOutput: 'Saving to: ‘wordlist.txt’<br>100%[===================>] 7,532       --.-K/s   in 0s<br>wordlist.txt saved',
+            outputExplanation: 'You now have a realistic dictionary of 1,000 common passwords to use in your offline attacks.'
           },
           {
             type: 'command',
             title: 'Step 2: Generate Audit Target Hash',
-            command: 'echo "5f4dcc3b5aa765d61d8327deb882cf99" > hashes.txt',
-            explanation: '<p>Write an MD5 hash target to <code>hashes.txt</code>.</p>',
+            command: 'echo "b115458022b7dce0a805cc0d68dbb5eb" > hashes.txt',
+            explanation: '<p>Write a new unknown MD5 hash target to <code>hashes.txt</code>. Your goal is to crack this hash in the upcoming steps.</p>',
             expectedOutput: 'Written target to hashes.txt',
             outputExplanation: 'The target hash is written to the file.'
           },
@@ -388,23 +388,23 @@ export const LAB_DATA: Track[] = [
             title: 'Step 3: Run Hashcat MD5 Audit',
             command: 'hashcat -m 0 hashes.txt wordlist.txt',
             explanation: '<p>Run a dictionary attack using Hashcat. Mode <code>-m 0</code> selects the MD5 algorithm.</p>',
-            expectedOutput: 'Session..........: hashcat<br>Status...........: Cracked<br>Hash.Name........: MD5<br>5f4dcc3b5aa765d61d8327deb882cf99:password',
-            outputExplanation: 'Hashcat matched the target hash against the word "password" in the dictionary file.'
+            expectedOutput: 'Session..........: hashcat<br>Status...........: Cracked<br>Hash.Name........: MD5<br>b115458022b7dce0a805cc0d68dbb5eb:[REDACTED_PASSWORD]',
+            outputExplanation: 'Hashcat successfully cracked the target hash using the downloaded wordlist! Check your terminal for the actual plaintext password.'
           },
           {
             type: 'command',
             title: 'Step 4: Show Hashcat Cracked Data',
             command: 'hashcat -m 0 hashes.txt --show',
-            explanation: '<p>Verify cracked credentials stored in the local session database.</p>',
-            expectedOutput: '5f4dcc3b5aa765d61d8327deb882cf99:password',
-            outputExplanation: 'Hashcat prints the cracked hash mapping: password.'
+            explanation: '<p>Verify cracked credentials stored in the local session database without running the attack again.</p>',
+            expectedOutput: 'b115458022b7dce0a805cc0d68dbb5eb:[REDACTED_PASSWORD]',
+            outputExplanation: 'Hashcat prints the cracked hash mapping. Take note of the password for the final challenge!'
           },
           {
             type: 'command',
             title: 'Step 5: Run John Dictionary Attack',
             command: 'john --wordlist=wordlist.txt hashes.txt',
             explanation: '<p>Audit the same hash using John the Ripper. John automatically detects the MD5 format.</p>',
-            expectedOutput: 'Loaded 1 password hash (raw-md5)<br>password         (hashes.txt)',
+            expectedOutput: 'Loaded 1 password hash (raw-md5)<br>[REDACTED_PASSWORD]         (hashes.txt)',
             outputExplanation: 'John successfully cracked the hash using the dictionary file.'
           },
           {
@@ -412,24 +412,24 @@ export const LAB_DATA: Track[] = [
             title: 'Step 6: Show John Cracked Results',
             command: 'john --show hashes.txt',
             explanation: '<p>Print active cracked targets from the John session database.</p>',
-            expectedOutput: 'hashes.txt: password<br>1 password hash cracked, 0 left',
-            outputExplanation: 'John prints: password.'
+            expectedOutput: 'hashes.txt: [REDACTED_PASSWORD]<br>1 password hash cracked, 0 left',
+            outputExplanation: 'John retrieves the previously cracked password from its internal potfile.'
           },
           {
             type: 'command',
             title: 'Step 7: Rule-Based Audit',
             command: 'john --wordlist=wordlist.txt --rules hashes.txt',
             explanation: '<p>Execute a rule-based attack. This adds numbers, symbols, and letter substitutions to words from the dictionary to detect complex variations.</p>',
-            expectedOutput: 'Loaded 1 password hash (raw-md5)<br>p@ssw0rd1!       (hashes.txt)',
-            outputExplanation: 'John modified the base word "password" to "p@ssw0rd1!" using transformation rules and matched the target hash.'
+            expectedOutput: 'Loaded 1 password hash (raw-md5)<br>No password hashes left to crack (see faq)',
+            outputExplanation: 'Because the hash was already cracked in Step 5, John skipped it. (If you were cracking a harder hash like "dragon123", rules would append digits to the base word "dragon" to find it!)'
           },
           {
             type: 'challenge',
-            title: 'Audit Challenge (Brute Force Mode)',
-            description: 'Construct a command using John the Ripper to run an incremental brute-force attack against "hashes.txt" capped at a maximum password length of 6 characters.',
-            acceptableAnswers: ['john --incremental --max-length=6 hashes.txt'],
-            successMessage: 'Correct! You configured John to restrict guessing, optimizing resource utilization.',
-            failureMessage: 'Incorrect syntax. Check the flags listed in Step 6 of the manual.'
+            title: 'Audit Challenge (Password Recovery)',
+            description: 'What was the exact plaintext password you recovered from the MD5 hash (b115458022b7dce0a805cc0d68dbb5eb) in Step 3?',
+            acceptableAnswers: ['dragon'],
+            successMessage: 'Correct! You successfully utilized an offline dictionary attack to retrieve the password.',
+            failureMessage: 'Incorrect password. Look closely at the output from Step 3 or Step 4 in your terminal.'
           },
           {
             type: 'badge',
@@ -485,8 +485,8 @@ export const LAB_DATA: Track[] = [
             title: 'Step 2: Run Hydra FTP Audit',
             command: 'hydra -l admin -P pass.txt ftp://192.168.1.100',
             explanation: '<p>Scan an FTP server using username <code>admin</code> (<code>-l</code>) and dictionary <code>pass.txt</code> (<code>-P</code>).</p>',
-            expectedOutput: '[DATA] attacking ftp://192.168.1.100:21/<br>[21][ftp] host: 192.168.1.100   login: admin   password: secret123',
-            outputExplanation: 'Hydra found valid FTP credentials: admin / secret123.'
+            expectedOutput: '[DATA] attacking ftp://192.168.1.100:21/<br>[21][ftp] host: 192.168.1.100   login: admin   password: [REDACTED_PASSWORD]',
+            outputExplanation: 'Hydra found valid FTP credentials for admin. Check your terminal for the actual password.'
           },
           {
             type: 'command',
@@ -501,7 +501,7 @@ export const LAB_DATA: Track[] = [
             title: 'Step 4: Run Medusa FTP Scan',
             command: 'medusa -h 192.168.1.100 -u admin -P pass.txt -M ftp',
             explanation: '<p>Run an FTP scan using Medusa. Note how the parameters differ from Hydra.</p>',
-            expectedOutput: 'Account Found: [192.168.1.100] User: admin Password: secret123 [Success]',
+            expectedOutput: 'Account Found: [192.168.1.100] User: admin Password: [REDACTED_PASSWORD] [Success]',
             outputExplanation: 'Medusa matched the credentials.'
           },
           {
@@ -525,16 +525,16 @@ export const LAB_DATA: Track[] = [
             title: 'Step 7: Run Ncrack FTP Audit',
             command: 'ncrack --user admin -P pass.txt ftp://192.168.1.100',
             explanation: '<p>Initiate Ncrack against the target FTP server.</p>',
-            expectedOutput: 'ncrack finished.<br>192.168.1.100 21/tcp ftp: admin secret123 credentials found',
+            expectedOutput: 'ncrack finished.<br>192.168.1.100 21/tcp ftp: admin [REDACTED_PASSWORD] credentials found',
             outputExplanation: 'Ncrack matched the admin credentials.'
           },
           {
             type: 'challenge',
             title: 'Online Audit Challenge',
-            description: 'Construct a command using THC Hydra to scan the target SSH service (ssh://192.168.1.100) using username "root" and password dictionary "pass.txt".',
-            acceptableAnswers: ['hydra -l root -P pass.txt ssh://192.168.1.100', 'hydra -l root -P pass.txt 192.168.1.100 ssh'],
-            successMessage: 'Correct. You configured Hydra to scan the remote SSH port.',
-            failureMessage: 'Incorrect syntax. Remember to specify username, password list, target IP, and the protocol.'
+            description: 'What was the plaintext password recovered by Hydra in Step 2 for the FTP server?',
+            acceptableAnswers: ['secret123'],
+            successMessage: 'Correct. You successfully retrieved the credential from the live service scanner output.',
+            failureMessage: 'Incorrect password. Look closely at the terminal output from Hydra in Step 2.'
           },
           {
             type: 'badge',
@@ -622,15 +622,15 @@ export const LAB_DATA: Track[] = [
             title: 'Step 6: Extract POST Form Data',
             command: 'tshark -r capture.pcap -Y "http.request.method == POST" -T fields -e http.file_data',
             explanation: '<p>Extract the raw form parameters submitted in HTTP POST requests.</p>',
-            expectedOutput: 'uname=admin&passwd=secr3t_pa$$&submit=Login',
-            outputExplanation: 'TShark successfully extracts the plaintext credentials: username "admin" and password "secr3t_pa$$".'
+            expectedOutput: 'uname=admin&passwd=[REDACTED_PASSWORD]&submit=Login',
+            outputExplanation: 'TShark successfully extracts the plaintext credentials submitted in the form. Look at the value next to "passwd=".'
           },
           {
             type: 'command',
             title: 'Step 7: View Basic HTTP Authentication',
             command: 'tshark -r capture.pcap -Y "http.authbinary" -V',
             explanation: '<p>View HTTP Basic Authentication headers if cookies or forms are not used.</p>',
-            expectedOutput: 'Hypertext Transfer Protocol<br>\tAuthorization: Basic YWRtaW46c2VjcjN0X3BhJFM=<br>\t[Credentials: admin:secr3t_pa$$]',
+            expectedOutput: 'Hypertext Transfer Protocol<br>\tAuthorization: Basic YWRtaW46c2VjcjN0X3BhJFM=<br>\t[Credentials: admin:[REDACTED_PASSWORD]]',
             outputExplanation: 'TShark decodes the base64 authorization string (YWRtaW46c2VjcjN0X3BhJFM=) to reveal the credentials.'
           },
           {

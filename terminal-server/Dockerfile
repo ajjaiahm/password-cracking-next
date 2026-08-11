@@ -25,9 +25,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder --chown=termserver:nodejs /app/dist ./dist
 COPY --from=deps --chown=termserver:nodejs /app/node_modules ./node_modules
 # Copy Dockerfile.lab so the terminal server can build the lab image
-COPY --chown=termserver:nodejs Dockerfile.lab ./Dockerfile.lab
+COPY Dockerfile.lab ./Dockerfile.lab
 
-USER termserver
+# USER termserver
 
 EXPOSE 4000
 CMD ["node", "dist/index.js"]

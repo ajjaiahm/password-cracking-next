@@ -149,7 +149,6 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
             return (
               <button
                 key={ct.id}
-                disabled={isGenerating}
                 onClick={() => {
                   setSelectedType(ct.id);
                 }}
@@ -168,7 +167,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-mono font-bold text-zinc-200 flex items-center gap-2">
                     {ct.label}
-                    {isGenerating && <Loader2 className="w-3 h-3 animate-spin text-gray-400" />}
+                    {isGenerating && <span className="text-[10px] text-blue-400 font-normal ml-1">...</span>}
                   </div>
                   <div className="text-[10px] text-gray-400 font-mono mt-0.5">{ct.desc}</div>
 
@@ -218,14 +217,19 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
         )}
 
         {selectedType && generating[selectedType] && (
-          <div className="space-y-5 border-t border-[#262626] pt-12 pb-12 text-center">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto mb-4" />
-            <h3 className="text-sm font-mono font-bold text-gray-300 uppercase tracking-widest animate-pulse">
-              Synthesizing Unique Scenario...
+          <div className="space-y-4 border-t border-[#262626] pt-12 pb-12 text-center bg-black/40 rounded">
+            <div className="text-blue-500 mb-2 font-mono text-xl">
+              [ SYSTEM WORKING ]
+            </div>
+            <h3 className="text-sm font-mono font-bold text-gray-300 uppercase tracking-widest">
+              Synthesizing Unique Scenario
             </h3>
-            <p className="text-[10px] text-gray-500 font-mono">
-              The AI Advisor is crafting a custom target environment just for you.
+            <p className="text-xs text-gray-500 font-mono max-w-md mx-auto">
+              The AI Advisor is analyzing threat vectors and crafting a custom target environment with randomized credentials.
             </p>
+            <div className="w-48 h-1 bg-[#262626] mx-auto mt-6 rounded overflow-hidden">
+              <div className="h-full bg-blue-500 animate-[pulse_1.5s_ease-in-out_infinite]" style={{ width: '100%' }}></div>
+            </div>
           </div>
         )}
 
