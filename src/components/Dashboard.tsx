@@ -39,19 +39,19 @@ export function Dashboard({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div 
-        className="glass-panel w-full max-w-4xl max-h-[90vh] flex flex-col rounded overflow-hidden relative border-[#262626] bg-[#171717] text-white"
+        className="glass-panel w-full max-w-4xl max-h-[90vh] flex flex-col rounded overflow-hidden relative border-border-primary bg-bg-panel text-text-primary"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-[#262626] flex justify-between items-center bg-black/40">
-          <h2 className="text-sm font-mono font-bold tracking-widest text-gray-300 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-gray-400" /> SYSTEM AUDITING PROFILE
+        <div className="p-6 border-b border-border-primary flex justify-between items-center bg-bg-secondary/40">
+          <h2 className="text-sm font-mono font-bold tracking-widest text-text-secondary flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-text-muted" /> SYSTEM AUDITING PROFILE
           </h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-text-muted hover:text-text-primary transition-colors p-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -61,36 +61,36 @@ export function Dashboard({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
           
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-black border border-[#262626]/80 p-4 rounded flex flex-col items-center justify-center text-center">
-              <Zap className="w-5 h-5 text-gray-400 mb-2" />
-              <div className="text-2xl font-mono font-bold text-white">{data.xp}</div>
-              <div className="text-[9px] text-gray-400 font-mono uppercase tracking-widest mt-1">Audit Score</div>
+            <div className="bg-bg-card border border-border-primary p-4 rounded flex flex-col items-center justify-center text-center shadow-sm">
+              <Zap className="w-5 h-5 text-text-muted mb-2" />
+              <div className="text-2xl font-mono font-bold text-text-primary">{data.xp}</div>
+              <div className="text-[9px] text-text-muted font-mono uppercase tracking-widest mt-1">Audit Score</div>
             </div>
-            <div className="bg-black border border-[#262626]/80 p-4 rounded flex flex-col items-center justify-center text-center">
-              <Trophy className="w-5 h-5 text-gray-400 mb-2" />
-              <div className="text-2xl font-mono font-bold text-blue-400">{data.coins}</div>
-              <div className="text-[9px] text-gray-400 font-mono uppercase tracking-widest mt-1">Coins Earned</div>
+            <div className="bg-bg-card border border-border-primary p-4 rounded flex flex-col items-center justify-center text-center shadow-sm">
+              <Trophy className="w-5 h-5 text-text-muted mb-2" />
+              <div className="text-2xl font-mono font-bold text-accent-blue">{data.coins}</div>
+              <div className="text-[9px] text-text-muted font-mono uppercase tracking-widest mt-1">Coins Earned</div>
             </div>
-            <div className="bg-black border border-[#262626]/80 p-4 rounded flex flex-col items-center justify-center text-center">
-              <Trophy className="w-5 h-5 text-gray-400 mb-2" />
-              <div className="text-2xl font-mono font-bold text-white">{data.completedLabs.length}/{totalLabs}</div>
-              <div className="text-[9px] text-gray-400 font-mono uppercase tracking-widest mt-1">Audits Complete</div>
+            <div className="bg-bg-card border border-border-primary p-4 rounded flex flex-col items-center justify-center text-center shadow-sm">
+              <Trophy className="w-5 h-5 text-text-muted mb-2" />
+              <div className="text-2xl font-mono font-bold text-text-primary">{data.completedLabs.length}/{totalLabs}</div>
+              <div className="text-[9px] text-text-muted font-mono uppercase tracking-widest mt-1">Audits Complete</div>
             </div>
-            <div className="bg-black border border-[#262626]/80 p-4 rounded flex flex-col items-center justify-center text-center">
-              <Award className="w-5 h-5 text-gray-400 mb-2" />
-              <div className="text-2xl font-mono font-bold text-white">{data.earnedBadges.length}/{totalLabs}</div>
-              <div className="text-[9px] text-gray-400 font-mono uppercase tracking-widest mt-1">Credentials Earned</div>
+            <div className="bg-bg-card border border-border-primary p-4 rounded flex flex-col items-center justify-center text-center shadow-sm">
+              <Award className="w-5 h-5 text-text-muted mb-2" />
+              <div className="text-2xl font-mono font-bold text-text-primary">{data.earnedBadges.length}/{totalLabs}</div>
+              <div className="text-[9px] text-text-muted font-mono uppercase tracking-widest mt-1">Credentials Earned</div>
             </div>
-            <div className="bg-black border border-[#262626]/80 p-4 rounded flex flex-col items-center justify-center text-center">
-              <Terminal className="w-5 h-5 text-gray-400 mb-2" />
-              <div className="text-2xl font-mono font-bold text-white">{data.commandsRun || 0}</div>
-              <div className="text-[9px] text-gray-400 font-mono uppercase tracking-widest mt-1">Queries Ran</div>
+            <div className="bg-bg-card border border-border-primary p-4 rounded flex flex-col items-center justify-center text-center shadow-sm">
+              <Terminal className="w-5 h-5 text-text-muted mb-2" />
+              <div className="text-2xl font-mono font-bold text-text-primary">{data.commandsRun || 0}</div>
+              <div className="text-[9px] text-text-muted font-mono uppercase tracking-widest mt-1">Queries Ran</div>
             </div>
           </div>
 
           {/* Earned Audits Certifications Grid */}
           <div>
-            <h3 className="text-xs font-mono font-bold mb-4 uppercase tracking-wider text-gray-400">Security Clearance Credentials</h3>
+            <h3 className="text-xs font-mono font-bold mb-4 uppercase tracking-wider text-text-muted">Security Clearance Credentials</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {LAB_DATA.map(track => 
                 track.labs.map(lab => {
@@ -101,16 +101,16 @@ export function Dashboard({ isOpen, onClose }: { isOpen: boolean, onClose: () =>
                       className={`
                         flex flex-col items-center justify-center p-5 rounded border text-center transition-all duration-200
                         ${isEarned 
-                          ? 'bg-black/40 border-zinc-700 shadow-md' 
-                          : 'bg-black/10 border-[#262626]/50 opacity-40 grayscale'
+                          ? 'bg-bg-card border-border-primary shadow-md' 
+                          : 'bg-bg-card/50 border-border-primary/50 opacity-50 grayscale'
                         }
                       `}
                     >
-                      <div className="w-12 h-12 rounded border border-[#262626] flex items-center justify-center bg-black/80 mb-3">
-                        {isEarned ? renderBadgeIcon(lab.badgeIcon) : <Lock className="w-4 h-4 text-gray-400" />}
+                      <div className="w-12 h-12 rounded border border-border-primary flex items-center justify-center bg-bg-secondary mb-3">
+                        {isEarned ? renderBadgeIcon(lab.badgeIcon) : <Lock className="w-4 h-4 text-text-muted" />}
                       </div>
-                      <div className="text-[11px] font-mono text-gray-300 font-bold leading-tight mb-1">{lab.badgeName}</div>
-                      <div className="text-[9px] text-gray-400 uppercase tracking-widest">{isEarned ? 'Cleared' : 'Locked'}</div>
+                      <div className="text-[11px] font-mono text-text-primary font-bold leading-tight mb-1">{lab.badgeName}</div>
+                      <div className="text-[9px] text-text-muted uppercase tracking-widest">{isEarned ? 'Cleared' : 'Locked'}</div>
                     </div>
                   );
                 })

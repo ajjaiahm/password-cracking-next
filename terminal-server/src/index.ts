@@ -210,7 +210,7 @@ wss.on('connection', async (ws: WebSocket, req: http.IncomingMessage) => {
       AttachStdout: true,
       AttachStderr: true,
       Tty: true,
-      Env: ['TERM=xterm'],
+      Env: ['TERM=xterm-256color', 'LANG=en_US.UTF-8'],
       Cmd: ['/bin/bash'],
     });
 
@@ -223,11 +223,30 @@ wss.on('connection', async (ws: WebSocket, req: http.IncomingMessage) => {
     stream.write('echo "Welcome to the Password Cracking Lab Sandbox!" && cd /home/operator && ls -la\n');
 
     // Client → Container
-    ws.on('message', (msg) => {
+    ws.on('message', async (msg) => {
       // Update last activity on each message (debounce idle timer)
       const session = activeSessions.get(userId);
       if (session) session.lastActivity = Date.now();
-      stream.write(msg.toString());
+      
+      try {
+        const payloadStr = msg.toString();
+        // Check if message looks like JSON to avoid parsing raw terminal input when possible
+        if (payloadStr.startsWith('{') && payloadStr.endsWith('}')) {
+          const data = JSON.parse(payloadStr);
+          if (data.type === 'resize' && data.cols && data.rows) {
+            await exec.resize({ h: data.rows, w: data.cols });
+            return;
+          } else if (data.type === 'data' && data.payload !== undefined) {
+            stream.write(data.payload);
+            return;
+          }
+        }
+        // Fallback for raw data or non-JSON messages
+        stream.write(msg.toString());
+      } catch (e) {
+        // Fallback for invalid JSON
+        stream.write(msg.toString());
+      }
     });
 
     // Container → Client

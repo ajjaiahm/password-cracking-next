@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProgressProvider } from "@/context/ProgressContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -49,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -58,11 +59,13 @@ export default function RootLayout({
         <meta name="application-name" content="PCL" />
       </head>
       <body>
-        <AuthProvider>
-          <ProgressProvider>
-            {children}
-          </ProgressProvider>
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <AuthProvider>
+            <ProgressProvider>
+              {children}
+            </ProgressProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -117,16 +117,16 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
   const content = (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#262626] bg-black/60">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary bg-bg-secondary/60">
         <div className="flex items-center gap-3">
           <Trophy className="w-5 h-5 text-amber-400" />
           <div>
-            <h2 className="text-sm font-mono font-bold text-white uppercase tracking-wider">Daily Challenge</h2>
-            <p className="text-[10px] text-gray-400 font-mono">All 4 tools available — resets daily at midnight</p>
+            <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">Daily Challenge</h2>
+            <p className="text-[10px] text-text-muted font-mono">All 4 tools available — resets daily at midnight</p>
           </div>
         </div>
         {!inline && (
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
             <XCircle className="w-5 h-5" />
           </button>
         )}
@@ -156,20 +156,20 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
                   isActive ? 'border-zinc-500 bg-zinc-800/60 ring-1 ring-zinc-600' :
                   isCompleted ? 'border-emerald-900/40 bg-emerald-950/10' :
                   hasChallenge ? ct.color :
-                  'border-[#262626] bg-black/30 hover:bg-[#171717]/60'
+                  'border-border-primary bg-bg-primary/30 hover:bg-bg-card/60'
                 }`}
               >
                 <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${
                   isCompleted ? 'text-blue-400' :
-                  isActive ? 'text-zinc-200' :
+                  isActive ? 'text-text-primary' :
                   ct.color.split(' ')[0]
                 }`} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-mono font-bold text-zinc-200 flex items-center gap-2">
+                  <div className="text-xs font-mono font-bold text-text-primary flex items-center gap-2">
                     {ct.label}
                     {isGenerating && <span className="text-[10px] text-blue-400 font-normal ml-1">...</span>}
                   </div>
-                  <div className="text-[10px] text-gray-400 font-mono mt-0.5">{ct.desc}</div>
+                  <div className="text-[10px] text-text-muted font-mono mt-0.5">{ct.desc}</div>
 
                   {/* Status badge */}
                   <div className="mt-2">
@@ -178,7 +178,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
                         <CheckCircle2 className="w-2.5 h-2.5" /> Completed
                       </span>
                     ) : isGenerating ? (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-mono text-gray-400">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-mono text-text-muted">
                         Generating...
                       </span>
                     ) : hasChallenge ? (
@@ -197,14 +197,14 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
 
         {/* Active challenge details */}
         {selectedType && !dc && !generating[selectedType] && (
-          <div className="space-y-5 border-t border-[#262626] pt-8 pb-4 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#171717] border border-[#262626] flex items-center justify-center mb-4">
+          <div className="space-y-5 border-t border-border-primary pt-8 pb-4 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-bg-panel border border-border-primary flex items-center justify-center mb-4">
               {React.createElement(CHALLENGE_TYPES.find(c => c.id === selectedType)?.icon || HelpCircle, { className: 'w-8 h-8 text-blue-500' })}
             </div>
-            <h3 className="text-lg font-mono font-bold text-white mb-2">
+            <h3 className="text-lg font-mono font-bold text-text-primary mb-2">
               Generate {CHALLENGE_TYPES.find(c => c.id === selectedType)?.label} Challenge
             </h3>
-            <p className="text-xs text-gray-400 font-mono max-w-md mx-auto mb-6">
+            <p className="text-xs text-text-muted font-mono max-w-md mx-auto mb-6">
               Ready to test your skills? Generate a unique, AI-crafted password cracking scenario. Every challenge is generated dynamically and uniquely for you.
             </p>
             <button
@@ -217,24 +217,24 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
         )}
 
         {selectedType && generating[selectedType] && (
-          <div className="space-y-4 border-t border-[#262626] pt-12 pb-12 text-center bg-black/40 rounded">
+          <div className="space-y-4 border-t border-border-primary pt-12 pb-12 text-center bg-bg-secondary/40 rounded">
             <div className="text-blue-500 mb-2 font-mono text-xl">
               [ SYSTEM WORKING ]
             </div>
-            <h3 className="text-sm font-mono font-bold text-gray-300 uppercase tracking-widest">
+            <h3 className="text-sm font-mono font-bold text-text-secondary uppercase tracking-widest">
               Synthesizing Unique Scenario
             </h3>
-            <p className="text-xs text-gray-500 font-mono max-w-md mx-auto">
+            <p className="text-xs text-text-muted font-mono max-w-md mx-auto">
               The AI Advisor is analyzing threat vectors and crafting a custom target environment with randomized credentials.
             </p>
-            <div className="w-48 h-1 bg-[#262626] mx-auto mt-6 rounded overflow-hidden">
+            <div className="w-48 h-1 bg-border-primary mx-auto mt-6 rounded overflow-hidden">
               <div className="h-full bg-blue-500 animate-[pulse_1.5s_ease-in-out_infinite]" style={{ width: '100%' }}></div>
             </div>
           </div>
         )}
 
         {dc && !dc.completed && (
-          <div className="space-y-5 border-t border-[#262626] pt-5">
+          <div className="space-y-5 border-t border-border-primary pt-5">
             {/* Type badge */}
             <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider">
               <span className={`px-2 py-0.5 rounded border font-bold ${
@@ -247,31 +247,31 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
             </div>
 
             {/* Title */}
-            <h3 className="text-base font-mono font-bold text-white">{dc.title}</h3>
+            <h3 className="text-base font-mono font-bold text-text-primary">{dc.title}</h3>
 
             {/* Scenario */}
-            <div className="text-xs font-sans text-gray-400 leading-relaxed whitespace-pre-wrap">{dc.scenario}</div>
+            <div className="text-xs font-sans text-text-muted leading-relaxed whitespace-pre-wrap">{dc.scenario}</div>
 
             {/* Dummy Data */}
-            <div className="bg-black border border-[#262626] rounded p-4 space-y-2">
-              <div className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Target Credentials / Data</div>
+            <div className="bg-bg-primary border border-border-primary rounded p-4 space-y-2">
+              <div className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider">Target Credentials / Data</div>
               {dc.dummyData.map((d, i) => (
                 <div key={i} className="flex gap-3 font-mono text-xs">
-                  <span className="text-gray-400 shrink-0">{d.label}:</span>
-                  <span className="text-zinc-200 break-all">{d.value}</span>
+                  <span className="text-text-muted shrink-0">{d.label}:</span>
+                  <span className="text-text-primary break-all">{d.value}</span>
                 </div>
               ))}
             </div>
 
             {/* AI Mentor note */}
-            <div className="p-3 rounded border border-[#262626] bg-black/40 text-[10px] font-mono text-gray-400">
-              Use the <span className="text-gray-300">Advisor Agent</span> panel on the right for step-by-step guidance, command examples, and reference documentation links.
+            <div className="p-3 rounded border border-border-primary bg-bg-secondary/40 text-[10px] font-mono text-text-muted">
+              Use the <span className="text-text-secondary">Advisor Agent</span> panel on the right for step-by-step guidance, command examples, and reference documentation links.
             </div>
 
             {/* Hints */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">
+                <span className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider">
                   Hints ({dc.hintLevel}/{dc.hints.length} revealed)
                 </span>
                 {!dc.completed && dc.hintLevel < dc.hints.length && !firstChallengeFree && (
@@ -441,29 +441,29 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
             </div>
 
             {/* Answer Input */}
-            <div className="space-y-3 pt-2 border-t border-[#262626]">
-              <div className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Submit Found Credential & Explanation</div>
+            <div className="space-y-3 pt-2 border-t border-border-primary">
+              <div className="text-[10px] font-mono font-bold text-text-muted uppercase tracking-wider">Submit Found Credential & Explanation</div>
               <div className="flex flex-col gap-3">
                 <textarea
                   value={answers[selectedType!] || ''}
                   onChange={e => { setAnswers(prev => ({ ...prev, [selectedType!]: e.target.value })); setFeedback(prev => ({ ...prev, [selectedType!]: null })); }}
                   onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleVerify(selectedType!); } }}
                   placeholder="Enter the cracked password AND explain how you solved it..."
-                  className="w-full bg-black border border-[#262626] rounded px-3 py-2.5 text-xs text-white font-mono focus:border-zinc-700 outline-none resize-y"
+                  className="w-full bg-bg-primary border border-border-primary rounded px-3 py-2.5 text-xs text-text-primary font-mono focus:border-zinc-700 outline-none resize-y"
                   rows={3}
                 />
                 <button
                   onClick={() => handleVerify(selectedType!)}
                   disabled={verifying[selectedType!] || !answers[selectedType!]?.trim()}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white border border-zinc-700 text-xs px-5 py-2 rounded font-mono transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 self-end"
+                  className="bg-bg-secondary hover:bg-bg-panel text-text-secondary hover:text-text-primary border border-border-primary text-xs px-5 py-2 rounded font-mono transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 self-end"
                 >
                   {verifying[selectedType!] ? <><Loader2 className="w-3 h-3 animate-spin" /> Verifying...</> : 'Verify Answer & Explanation'}
                 </button>
               </div>
-              <p className="text-[10.5px] text-gray-400 font-mono leading-normal mt-1 bg-black/30 p-2 rounded border border-zinc-900">
+              <p className="text-[10.5px] text-text-muted font-mono leading-normal mt-1 bg-bg-primary/30 p-2 rounded border border-border-primary">
                 <strong>Format Guide:</strong> Submit the cracked plaintext password and a short explanation of the tools/commands you used.
                 <br />
-                <span className="text-[9.5px] text-gray-400">Answers accepted in any language. AI validates your response. (Shift+Enter for new line)</span>
+                <span className="text-[9.5px] text-text-muted">Answers accepted in any language. AI validates your response. (Shift+Enter for new line)</span>
               </p>
             </div>
 
@@ -486,8 +486,8 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
           <div className="p-4 rounded border border-emerald-900/40 bg-emerald-950/10 text-center">
             <CheckCircle2 className="w-8 h-8 text-blue-400 mx-auto mb-2" />
             <div className="text-sm font-mono font-bold text-blue-400">Challenge Complete</div>
-            <div className="text-[11px] font-mono text-gray-400 mt-1">+{dc.reward} coins awarded</div>
-            <div className="text-[10px] font-mono text-gray-400 mt-3">
+            <div className="text-[11px] font-mono text-text-muted mt-1">+{dc.reward} coins awarded</div>
+            <div className="text-[10px] font-mono text-text-muted mt-3">
               Try another tool above — all 4 refresh daily at midnight.
             </div>
           </div>
@@ -499,7 +499,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
 
   if (inline) {
     return (
-      <div className="w-full h-full bg-black flex flex-col overflow-hidden">
+      <div className="w-full h-full bg-bg-primary flex flex-col overflow-hidden">
         {content}
       </div>
     );
@@ -507,7 +507,7 @@ export function DailyChallengePanel({ onClose, inline }: { onClose: () => void; 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-3xl max-h-[85vh] bg-[#171717] border border-zinc-700 rounded-lg shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-3xl max-h-[85vh] bg-bg-panel border border-border-primary rounded-lg shadow-2xl flex flex-col overflow-hidden">
         {content}
       </div>
     </div>

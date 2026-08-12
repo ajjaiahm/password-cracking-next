@@ -1,41 +1,107 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Antigravity Theme (Deep Dark + Blue Accents) ── */
+  /* ── Antigravity Theme (Dynamic) ── */
   
-  /* Antigravity Base Palette */
-  --color-ag-bg: #0a0a0a;       /* Deepest background */
-  --color-ag-panel: #171717;    /* Surface panels */
-  --color-ag-border: #262626;   /* Subtle borders */
+  /* Semantic variables mapped from CSS root */
+  --color-bg-primary: var(--theme-bg-primary);
+  --color-bg-secondary: var(--theme-bg-secondary);
+  --color-bg-panel: var(--theme-bg-panel);
+  --color-bg-card: var(--theme-bg-card);
+  --color-bg-sidebar: var(--theme-bg-sidebar);
   
-  /* Antigravity Accent Palette */
-  --color-ag-accent: #3b82f6;   /* Electric Blue */
-  --color-ag-glow: #8b5cf6;     /* Purple/Blue Glow */
-  --color-ag-accent-hover: #60a5fa;
-  --color-ag-accent-dim: rgba(59, 130, 246, 0.2);
+  --color-border-primary: var(--theme-border-primary);
+  --color-border-glass: var(--theme-border-glass);
   
-  /* Core defaults */
-  --color-background: var(--color-ag-bg);
-  --color-foreground: #ffffff;
+  --color-text-primary: var(--theme-text-primary);
+  --color-text-secondary: var(--theme-text-secondary);
+  --color-text-muted: var(--theme-text-muted);
+  --color-text-sidebar: var(--theme-text-sidebar);
+  --color-text-sidebar-active: var(--theme-text-sidebar-active);
   
-  /* Accent defaults */
-  --color-accent-blue: var(--color-ag-accent);
-  --color-accent-dim: #a3a3a3;
+  --color-accent-orange: var(--theme-accent-orange);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-accent-dim: var(--theme-accent-dim);
   
-  /* Surface layers */
-  --color-bg-panel: rgba(23, 23, 23, 0.95);
-  --color-bg-card: var(--color-ag-border);
-  --color-bg-surface: var(--color-ag-panel);
-  --color-border-glass: rgba(255, 255, 255, 0.1);
-  --color-border-active: rgba(59, 130, 246, 0.5);
-  --color-terminal-bg: #000000;
+  --color-accent-blue: var(--theme-accent-blue);
   
-  /* Glow effects */
-  --glow-accent: 0 0 15px rgba(59, 130, 246, 0.25);
+  --color-terminal-bg: var(--theme-terminal-bg);
+  --glow-accent: var(--theme-glow-accent);
   
   /* Fonts */
   --font-mono: 'Consolas', 'Courier New', monospace;
   --font-sans: 'Inter', 'Segoe UI', sans-serif;
+}
+
+:root {
+  /* ── LIGHT MODE — Navy Blue ── */
+  --theme-bg-primary: #E8EDF7;
+  --theme-bg-secondary: #F0F4FB;
+  --theme-bg-panel: #FFFFFF;
+  --theme-bg-card: #FFFFFF;
+
+  --theme-bg-sidebar: #0A1628;
+  --theme-sidebar-hover: rgba(255, 255, 255, 0.10);
+  --theme-sidebar-active: rgba(249, 115, 22, 0.18);
+
+  --theme-border-primary: #B8C8DF;
+  --theme-border-glass: rgba(10, 22, 40, 0.12);
+
+  /* Stronger text for light mode — high contrast navy */
+  --theme-text-primary: #060E22;      /* Near-black navy — headings */
+  --theme-text-secondary: #0F2748;    /* Deep navy — body text */
+  --theme-text-muted: #2A4A70;        /* Dark slate — labels (was too faint before) */
+  --theme-text-sidebar: #C8D8F0;
+  --theme-text-sidebar-active: #F97316;
+
+  --theme-accent-orange: #C94F00;
+  --theme-accent-hover: #A83D00;
+  --theme-accent-dim: rgba(201, 79, 0, 0.10);
+
+  --theme-accent-blue: #1540B8;
+
+  --theme-terminal-bg: #060E22;
+  --theme-glow-accent: 0 10px 15px -3px rgba(10, 22, 40, 0.12), 0 4px 6px -2px rgba(10, 22, 40, 0.06);
+
+  /* Light mode font weight boost */
+  --theme-font-weight-label: 700;
+  --theme-font-weight-body: 500;
+  --theme-font-weight-muted: 600;
+}
+
+.dark {
+  /* ── DARK MODE — Original Dark Zinc/Black Terminal Theme ── */
+  --theme-bg-primary: #09090b;        /* Pure zinc-950 background */
+  --theme-bg-secondary: #111113;      /* Slightly lighter for depth */
+  --theme-bg-panel: #18181b;          /* zinc-900 panels */
+  --theme-bg-card: #1c1c1f;           /* zinc-800 cards */
+
+  --theme-bg-sidebar: #0d0d0f;        /* Near-black sidebar */
+  --theme-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --theme-sidebar-active: rgba(249, 115, 22, 0.15);
+
+  --theme-border-primary: #27272a;    /* zinc-800 borders */
+  --theme-border-glass: rgba(255, 255, 255, 0.06);
+
+  --theme-text-primary: #f4f4f5;      /* zinc-100 — bright headings */
+  --theme-text-secondary: #a1a1aa;    /* zinc-400 — body text */
+  --theme-text-muted: #71717a;        /* zinc-500 — muted labels */
+  --theme-text-sidebar: #a1a1aa;
+  --theme-text-sidebar-active: #F97316;
+
+  --theme-accent-orange: #f97316;     /* orange-500 */
+  --theme-accent-hover: #ea580c;      /* orange-600 */
+  --theme-accent-dim: rgba(249, 115, 22, 0.12);
+
+  --theme-accent-blue: #60a5fa;       /* blue-400 — readable on dark */
+
+  --theme-terminal-bg: #000000;       /* Pure black terminal */
+  --theme-glow-accent: 0 10px 15px -3px rgba(249, 115, 22, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* Dark mode font weights — standard */
+  --theme-font-weight-label: 600;
+  --theme-font-weight-body: 400;
+  --theme-font-weight-muted: 400;
 }
 
 /* Custom Scrollbar — Dark Navy/Orange Style */
@@ -50,8 +116,12 @@
   background: var(--color-zinc-700);
   border-radius: 4px;
 }
+::-webkit-scrollbar-thumb {
+  background: #52525b;
+  border-radius: 4px;
+}
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff7e00;
+  background: #f97316;
 }
 
 @layer base {
@@ -69,8 +139,9 @@
   }
 
   body {
-    @apply bg-[var(--color-background)] text-[var(--color-foreground)] antialiased overflow-hidden;
+    @apply bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] antialiased overflow-hidden;
     font-family: var(--font-sans);
+    font-weight: var(--theme-font-weight-body, 400);
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
@@ -153,6 +224,67 @@
 @keyframes typing {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
   40% { transform: scale(1.1); opacity: 0.9; }
+}
+
+/* ── Prose Content (LabViewer Theory/Objective) ── */
+.prose h2, .prose h3, .prose h4 {
+  color: var(--theme-text-primary);
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+.prose p, .prose li {
+  color: var(--theme-text-secondary);
+  font-weight: var(--theme-font-weight-body, 400);
+  line-height: 1.75;
+}
+.prose strong {
+  color: var(--theme-text-primary);
+  font-weight: 800;
+}
+.prose em {
+  color: var(--theme-accent-orange);
+  font-style: italic;
+  font-weight: 600;
+}
+.prose code {
+  color: var(--theme-accent-orange);
+  background: var(--theme-bg-secondary);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--theme-border-primary);
+  font-size: 0.85em;
+  font-weight: 700;
+}
+.prose pre {
+  background: var(--theme-terminal-bg);
+  color: #e2e8f0;
+  border: 1px solid var(--theme-border-primary);
+  border-radius: 6px;
+  padding: 1rem;
+}
+.prose blockquote {
+  border-left: 3px solid var(--theme-accent-orange);
+  color: var(--theme-text-secondary);
+  padding-left: 1rem;
+  margin-left: 0;
+  font-style: italic;
+}
+.prose ul { list-style-type: disc; padding-left: 1.5rem; }
+.prose ol { list-style-type: decimal; padding-left: 1.5rem; }
+.prose li::marker { color: var(--theme-accent-orange); }
+
+/* ── Light mode: heavier labels and muted text ── */
+:root .font-mono,
+:root span,
+:root label,
+:root p {
+  font-weight: var(--theme-font-weight-body, 400);
+}
+:root .text-text-muted,
+:root [class*="text-text-muted"] {
+  font-weight: var(--theme-font-weight-muted, 600);
+  color: var(--theme-text-muted);
 }
 
 /* ── Responsive Workspace Layout Adjustments ── */

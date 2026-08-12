@@ -151,17 +151,17 @@ export function AuthScreens({ view }: AuthScreensProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4 font-sans select-none relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-bg-primary text-text-primary p-4 font-sans select-none relative overflow-hidden">
       <AntigravityBackground />
 
       {/* Top progress bar when loading */}
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-zinc-800 z-50">
-        {loading && <div className="h-full bg-zinc-400 animate-pulse w-full" />}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-border-primary z-50">
+        {loading && <div className="h-full bg-text-secondary animate-pulse w-full" />}
       </div>
 
       {/* Mock mode banner */}
       {isMockBackend && (
-        <div className="w-full max-w-md mb-4 bg-[#171717]/90 border border-yellow-900/30 text-yellow-600/90 p-3 rounded text-[10px] font-mono flex gap-2.5 items-start z-10 shadow-lg backdrop-blur-sm">
+        <div className="w-full max-w-md mb-4 bg-bg-panel/90 border border-yellow-900/30 text-yellow-600/90 p-3 rounded text-[10px] font-mono flex gap-2.5 items-start z-10 shadow-lg backdrop-blur-sm">
           <AlertTriangle className="w-4 h-4 text-yellow-600/90 shrink-0 mt-0.5" />
           <div>
             <span className="font-bold uppercase">DATABASE MOCK MODE:</span> No Firebase keys found.
@@ -170,19 +170,19 @@ export function AuthScreens({ view }: AuthScreensProps) {
         </div>
       )}
 
-      <div className="w-full max-w-md bg-[#171717]/90 border border-[#262626] p-8 rounded shadow-2xl relative z-10 backdrop-blur-md">
+      <div className="w-full max-w-md bg-bg-panel/90 border border-border-primary p-8 rounded shadow-2xl relative z-10 backdrop-blur-md">
         {/* Header */}
         <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 rounded border border-[#262626] flex items-center justify-center bg-black/60 text-gray-400">
-            {view === 'onboarding' ? <KeyRound className="w-6 h-6 text-gray-300" /> :
+          <div className="w-12 h-12 rounded border border-border-primary flex items-center justify-center bg-bg-secondary/60 text-text-muted">
+            {view === 'onboarding' ? <KeyRound className="w-6 h-6 text-text-secondary" /> :
              view === 'signup' && emailSent ? <Mail className="w-6 h-6 text-blue-500" /> :
-             <Shield className="w-6 h-6 text-gray-300" />}
+             <Shield className="w-6 h-6 text-text-secondary" />}
           </div>
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="font-mono text-xs tracking-[0.3em] text-gray-300 uppercase font-bold">Password Cracking Lab</h1>
-          <p className="text-[9px] text-gray-400 tracking-wider uppercase mt-1">Operational Audit Workspace</p>
+          <h1 className="font-mono text-xs tracking-[0.3em] text-text-secondary uppercase font-bold">Password Cracking Lab</h1>
+          <p className="text-[9px] text-text-muted tracking-wider uppercase mt-1">Operational Audit Workspace</p>
         </div>
 
         {/* Error / Success */}
@@ -193,7 +193,7 @@ export function AuthScreens({ view }: AuthScreensProps) {
           </div>
         )}
         {successMsg && (
-          <div className="mb-6 p-3 bg-black border border-[#262626] text-gray-300 text-xs font-mono rounded">
+          <div className="mb-6 p-3 bg-bg-secondary border border-border-primary text-text-secondary text-xs font-mono rounded">
             {successMsg}
           </div>
         )}
@@ -220,20 +220,20 @@ export function AuthScreens({ view }: AuthScreensProps) {
             )}
 
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">User Email</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">User Email</label>
               <input
                 type="email" required autoComplete="email"
                 value={email} onChange={e => setEmail(e.target.value)} disabled={loading || !!lockoutUntil}
-                className="w-full bg-black/60 border border-[#262626] focus:border-zinc-600 text-white text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-gray-400"
+                className="w-full bg-bg-secondary/60 border border-border-primary focus:border-zinc-600 text-text-primary text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-text-muted"
                 placeholder="operator@system.domain"
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">Password</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">Password</label>
               <input
                 type="password" required autoComplete="current-password"
                 value={password} onChange={e => setPassword(e.target.value)} disabled={loading || !!lockoutUntil}
-                className="w-full bg-black/60 border border-[#262626] focus:border-zinc-600 text-white text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-gray-400"
+                className="w-full bg-bg-secondary/60 border border-border-primary focus:border-zinc-600 text-text-primary text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-text-muted"
                 placeholder="••••••••"
               />
             </div>
@@ -257,18 +257,18 @@ export function AuthScreens({ view }: AuthScreensProps) {
 
             <div className="flex justify-between items-center text-xs pt-1">
               <button type="button" onClick={() => { navigate('/forgot'); clearMessages(); }}
-                className="text-gray-400 hover:text-gray-300 transition-colors" disabled={loading}>
+                className="text-text-muted hover:text-text-secondary transition-colors" disabled={loading}>
                 Forgot Password?
               </button>
             </div>
             <button type="submit" disabled={loading || !!lockoutUntil}
-              className="w-full flex items-center justify-center gap-2 mt-2 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-2 mt-2 py-3 bg-accent-blue hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : lockoutUntil ? 'Account Locked' : <>Authenticate <ArrowRight className="w-4 h-4" /></>}
             </button>
-            <div className="text-center text-xs pt-4 border-t border-[#262626]/50 text-gray-400">
+            <div className="text-center text-xs pt-4 border-t border-border-primary/50 text-text-muted">
               New operator?{' '}
               <button type="button" onClick={() => { navigate('/signup'); clearMessages(); setEmailSent(false); }}
-                className="text-gray-300 hover:text-white transition-colors" disabled={loading}>
+                className="text-text-secondary hover:text-text-primary transition-colors" disabled={loading}>
                 Register Account
               </button>
             </div>
@@ -278,16 +278,16 @@ export function AuthScreens({ view }: AuthScreensProps) {
         {/* ── SIGNUP: Step 1 — Email only ── */}
         {view === 'signup' && !emailSent && (
           <form onSubmit={handleSignup} className="space-y-5">
-            <p className="text-xs text-gray-400 font-mono leading-relaxed">
-              Enter your email address. We will send you a <span className="text-blue-500 font-semibold">secure verification link</span>.
+            <p className="text-xs text-text-muted font-mono leading-relaxed">
+              Enter your email address. We will send you a <span className="text-accent-blue font-semibold">secure verification link</span>.
               After clicking the link, you will be taken to a private page to complete your account setup.
             </p>
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">Email Address</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">Email Address</label>
               <input
                 type="email" required autoComplete="email"
                 value={email} onChange={e => setEmail(e.target.value)} disabled={loading}
-                className="w-full bg-black/60 border border-[#262626] focus:border-cyan-800 text-white text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-gray-400"
+                className="w-full bg-bg-secondary/60 border border-border-primary focus:border-cyan-800 text-text-primary text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-text-muted"
                 placeholder="operator@system.domain"
               />
             </div>
@@ -295,10 +295,10 @@ export function AuthScreens({ view }: AuthScreensProps) {
               className="w-full flex items-center justify-center gap-2 py-3 bg-blue-900/40 hover:bg-blue-900/70 border border-blue-600/50 text-blue-400 font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Mail className="w-4 h-4" /> Send Verification Email</>}
             </button>
-            <div className="text-center text-xs pt-2 border-t border-[#262626]/50 text-gray-400">
+            <div className="text-center text-xs pt-2 border-t border-border-primary/50 text-text-muted">
               Already registered?{' '}
               <button type="button" onClick={() => { navigate('/login'); clearMessages(); }}
-                className="text-gray-300 hover:text-white transition-colors" disabled={loading}>
+                className="text-text-secondary hover:text-text-primary transition-colors" disabled={loading}>
                 Authenticate
               </button>
             </div>
@@ -309,34 +309,34 @@ export function AuthScreens({ view }: AuthScreensProps) {
         {view === 'signup' && emailSent && (
           <div className="space-y-6 text-center">
             <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-full border border-blue-600/50 bg-[#171717]/20 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full border border-blue-600/50 bg-bg-panel/20 flex items-center justify-center">
                 <Mail className="w-8 h-8 text-blue-500" />
               </div>
             </div>
             <div>
-              <h2 className="font-mono text-sm font-bold text-white mb-2">Check Your Inbox</h2>
-              <p className="text-xs text-gray-400 font-mono leading-relaxed">
+              <h2 className="font-mono text-sm font-bold text-text-primary mb-2">Check Your Inbox</h2>
+              <p className="text-xs text-text-muted font-mono leading-relaxed">
                 A secure verification link was sent to:<br />
                 <span className="text-blue-500 font-semibold">{email}</span>
               </p>
             </div>
-            <div className="bg-black border border-[#262626] rounded p-4 text-left space-y-2.5">
-              <div className="flex items-start gap-2 text-xs font-mono text-gray-400">
+            <div className="bg-bg-secondary border border-border-primary rounded p-4 text-left space-y-2.5">
+              <div className="flex items-start gap-2 text-xs font-mono text-text-muted">
                 <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>Open your email inbox (including <span className="text-zinc-200">Spam / Junk</span> folder)</span>
+                <span>Open your email inbox (including <span className="text-text-primary">Spam / Junk</span> folder)</span>
               </div>
-              <div className="flex items-start gap-2 text-xs font-mono text-gray-400">
+              <div className="flex items-start gap-2 text-xs font-mono text-text-muted">
                 <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <span>Look for a message from <span className="text-zinc-200">Password Cracking Lab</span></span>
+                <span>Look for a message from <span className="text-text-primary">Password Cracking Lab</span></span>
               </div>
-              <div className="flex items-start gap-2 text-xs font-mono text-gray-400">
+              <div className="flex items-start gap-2 text-xs font-mono text-text-muted">
                 <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                 <span>Click the secure link inside to complete your account setup</span>
               </div>
             </div>
-            <p className="text-[10px] text-gray-400 font-mono">
+            <p className="text-[10px] text-text-muted font-mono">
               Link not received? Check spam or{' '}
-              <button onClick={() => setEmailSent(false)} className="text-gray-400 hover:text-zinc-200 underline">
+              <button onClick={() => setEmailSent(false)} className="text-text-muted hover:text-text-primary underline">
                 try a different email
               </button>
             </p>
@@ -346,25 +346,25 @@ export function AuthScreens({ view }: AuthScreensProps) {
         {/* ── FORGOT PASSWORD ── */}
         {view === 'forgot' && (
           <form onSubmit={handleResetPassword} className="space-y-4">
-            <p className="text-xs text-gray-400 font-mono leading-relaxed mb-4">
+            <p className="text-xs text-text-muted font-mono leading-relaxed mb-4">
               Enter your account email to receive a secure password reset link.
             </p>
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">Account Email</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">Account Email</label>
               <input
                 type="email" required
                 value={email} onChange={e => setEmail(e.target.value)} disabled={loading}
-                className="w-full bg-black/60 border border-[#262626] focus:border-zinc-600 text-white text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-gray-400"
+                className="w-full bg-bg-secondary/60 border border-border-primary focus:border-zinc-600 text-text-primary text-sm p-3 rounded outline-none transition-colors font-mono placeholder:text-text-muted"
                 placeholder="operator@system.domain"
               />
             </div>
             <button type="submit" disabled={loading}
-              className="w-full flex items-center justify-center gap-2 mt-2 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-2 mt-2 py-3 bg-accent-blue hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Reset Link'}
             </button>
-            <div className="text-center text-xs pt-4 border-t border-[#262626]/50">
+            <div className="text-center text-xs pt-4 border-t border-border-primary/50">
               <button type="button" onClick={() => { navigate('/login'); clearMessages(); }}
-                className="text-gray-400 hover:text-white transition-colors" disabled={loading}>
+                className="text-text-muted hover:text-text-primary transition-colors" disabled={loading}>
                 Back to Login
               </button>
             </div>
@@ -374,13 +374,13 @@ export function AuthScreens({ view }: AuthScreensProps) {
         {/* ── ONBOARDING ── */}
         {view === 'onboarding' && (
           <form onSubmit={handleOnboarding} className="space-y-4">
-            <p className="text-xs text-gray-400 font-mono leading-relaxed mb-4">
+            <p className="text-xs text-text-muted font-mono leading-relaxed mb-4">
               Onboarding: Configure your lab console by answering these quick questions.
             </p>
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">Primary Interest</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">Primary Interest</label>
               <select value={interest} onChange={e => setInterest(e.target.value)} disabled={loading}
-                className="w-full bg-black border border-[#262626] focus:border-zinc-600 text-white text-sm p-3 rounded outline-none font-mono">
+                className="w-full bg-bg-secondary border border-border-primary focus:border-zinc-600 text-text-primary text-sm p-3 rounded outline-none font-mono">
                 <option value="Application Security">Application Security</option>
                 <option value="Penetration Testing">Penetration Testing</option>
                 <option value="Security Auditing & Compliance">Security Auditing &amp; Compliance</option>
@@ -389,16 +389,16 @@ export function AuthScreens({ view }: AuthScreensProps) {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-mono mb-2">Experience Level</label>
+              <label className="block text-[10px] uppercase tracking-wider text-text-muted font-mono mb-2">Experience Level</label>
               <select value={experience} onChange={e => setExperience(e.target.value)} disabled={loading}
-                className="w-full bg-black border border-[#262626] focus:border-zinc-600 text-white text-sm p-3 rounded outline-none font-mono">
+                className="w-full bg-bg-secondary border border-border-primary focus:border-zinc-600 text-text-primary text-sm p-3 rounded outline-none font-mono">
                 <option value="Entry-level / Student">Entry-level / Student</option>
                 <option value="Intermediate Security Specialist">Intermediate Security Specialist</option>
                 <option value="Advanced Practitioner / Engineer">Advanced Practitioner / Engineer</option>
               </select>
             </div>
             <button type="submit" disabled={loading}
-              className="w-full flex items-center justify-center gap-2 mt-4 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
+              className="w-full flex items-center justify-center gap-2 mt-4 py-3 bg-accent-blue hover:bg-blue-500 text-white font-semibold text-xs uppercase tracking-wider rounded transition-colors disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Complete Setup'}
             </button>
           </form>

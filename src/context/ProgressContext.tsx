@@ -157,10 +157,29 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   // Debounce timer ref — so rapid successive calls batch into one Firestore write
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDataRef = useRef<ProgressData | null>(null);
+
+  // Auto-save on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (pendingDataRef.current && user) {
+        if (isMockMode) {
+          localStorage.setItem(`password_lab_progress_mock_${user.uid}`, JSON.stringify(pendingDataRef.current));
+        } else {
+          // Note: Firestore async saves might not complete reliably on unload, 
+          // but we can try our best. In a real app we'd use service workers or keepalive.
+          setDoc(doc(db, 'users', user.uid, 'progress', 'state'), pendingDataRef.current);
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [user, isMockMode]);
 
   const saveData = useCallback(async (newData: ProgressData) => {
     // Optimistically update local state immediately
     setData(newData);
+    pendingDataRef.current = newData;
 
     if (!user) return;
 
@@ -179,6 +198,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
           console.error('Failed to save progress to database', err);
         }
       }
+      pendingDataRef.current = null;
     }, 500);
   }, [user, isMockMode]);
 

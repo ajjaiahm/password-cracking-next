@@ -121,10 +121,10 @@ function ResizeHandle({ onDrag, onDragStart, onDragEnd, position }: { onDrag: (d
     <div
       onMouseDown={onMouseDown}
       className={`group shrink-0 flex items-center justify-center transition-colors relative z-20 ${
-        isVertical ? 'h-2 w-full cursor-row-resize hover:bg-zinc-800' : 'w-2 h-full cursor-col-resize hover:bg-zinc-800'
+        isVertical ? 'h-2 w-full cursor-row-resize hover:bg-border-primary' : 'w-2 h-full cursor-col-resize hover:bg-border-primary'
       }`}
     >
-      <div className={`rounded-full bg-zinc-700 group-hover:bg-zinc-500 transition-colors ${
+      <div className={`rounded-full bg-text-secondary group-hover:bg-zinc-500 transition-colors ${
         isVertical ? 'w-8 h-1' : 'w-1 h-8'
       }`} />
     </div>
@@ -204,7 +204,7 @@ function WorkspaceLayout() {
 
   return (
     <LabProvider>
-      <main className="flex h-screen w-full overflow-hidden relative bg-black text-white">
+      <main className="flex h-screen w-full overflow-hidden relative bg-bg-primary text-text-primary">
         
         {/* Cursor Reactive Grid Canvas */}
         <AntigravityBackground />
@@ -249,21 +249,21 @@ function WorkspaceLayout() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10 bg-transparent overflow-hidden">
           
           {/* Mobile Header */}
-          <div className="md:hidden h-14 border-b border-[#262626]/80 flex items-center justify-between px-4 bg-[#171717]/80 backdrop-blur-xl shrink-0">
+          <div className="md:hidden h-14 border-b border-border-primary flex items-center justify-between px-4 bg-bg-panel/80 backdrop-blur-xl shrink-0">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsMobileOpen(true)}
-                className="text-gray-400 hover:text-white transition-colors p-1 rounded"
+                className="text-text-muted hover:text-text-primary transition-colors p-1 rounded"
                 aria-label="Open navigation menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <span className="font-mono font-bold text-xs tracking-widest text-gray-300">PCL</span>
+              <span className="font-mono font-bold text-xs tracking-widest text-text-secondary">PCL</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsDashboardOpen(true)}
-                className="text-gray-400 hover:text-white transition-colors p-1.5 rounded border border-[#262626]"
+                className="text-text-muted hover:text-text-primary transition-colors p-1.5 rounded border border-border-primary"
                 aria-label="Dashboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,7 +272,7 @@ function WorkspaceLayout() {
               </button>
               <button
                 onClick={() => setIsLeaderboardOpen(true)}
-                className="text-blue-400 hover:text-amber-400 transition-colors p-1.5 rounded border border-[#262626]"
+                className="text-accent-blue hover:text-amber-400 transition-colors p-1.5 rounded border border-border-primary"
                 aria-label="Leaderboard"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,7 +302,7 @@ function WorkspaceLayout() {
             {/* Right panel: Mentor + Terminal — stacks below on mobile */}
             <div 
               style={{ width: isMobile ? '100%' : rightPanelWidth }}
-              className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-[#262626] flex flex-col bg-[#171717]/60 ${smoothClass}`}
+              className={`right-panel-mobile md:shrink-0 md:min-h-0 border-t md:border-t-0 md:border-l border-border-primary flex flex-col bg-bg-panel/60 ${smoothClass}`}
             >
               <VirtualMentor />
               <ResizeHandle 

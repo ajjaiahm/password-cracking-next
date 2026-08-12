@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import { useTheme } from 'next-themes';
 
 export function AntigravityBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { resolvedTheme } = useTheme();
   const mouseRef = useRef({ x: -1000, y: -1000, targetX: -1000, targetY: -1000 });
 
   useEffect(() => {
@@ -70,7 +72,9 @@ export function AntigravityBackground() {
         
         c.beginPath();
         c.arc(sx, sy, r, 0, Math.PI * 2);
-        c.fillStyle = `rgba(255, 255, 255, ${1 - this.z / width})`;
+        c.fillStyle = resolvedTheme === 'light' 
+          ? `rgba(0, 0, 0, ${1 - this.z / width})` 
+          : `rgba(255, 255, 255, ${1 - this.z / width})`;
         c.fill();
       }
     }
@@ -98,7 +102,7 @@ export function AntigravityBackground() {
       }
 
       // Base background color
-      ctx.fillStyle = '#0a0a0a';
+      ctx.fillStyle = resolvedTheme === 'light' ? '#f9fafb' : '#0a0a0a';
       ctx.fillRect(0, 0, width, height);
 
       // Draw subtle radial glows

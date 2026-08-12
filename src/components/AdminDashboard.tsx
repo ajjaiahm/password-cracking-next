@@ -130,21 +130,21 @@ export function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col relative overflow-hidden">
       <AntigravityBackground />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-[#262626]/80 bg-[#171717]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+      <header className="relative z-10 border-b border-border-primary/80 bg-bg-panel/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/workspace')}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+            className="p-2 hover:bg-border-primary rounded-lg transition-colors text-text-muted hover:text-text-primary"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-6 h-6 text-blue-400" />
-            <h1 className="text-xl font-bold tracking-tight text-white font-mono">Admin Control Center</h1>
+            <h1 className="text-xl font-bold tracking-tight text-text-primary font-mono">Admin Control Center</h1>
           </div>
         </div>
         <button
@@ -161,17 +161,17 @@ export function AdminDashboard() {
       <main className="relative z-10 flex-1 p-6 max-w-7xl w-full mx-auto flex flex-col gap-6">
 
         {/* Tabs */}
-        <div className="flex border-b border-[#262626] font-mono text-sm">
+        <div className="flex border-b border-border-primary font-mono text-sm">
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'users' ? 'border-blue-400 text-amber-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-zinc-700'}`}
+            className={`px-6 py-3 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'users' ? 'border-blue-400 text-amber-400' : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary'}`}
           >
             <Users className="w-4 h-4" />
             Registered Users ({users.length}{hasMore ? '+' : ''})
           </button>
           <button
             onClick={() => setActiveTab('sessions')}
-            className={`px-6 py-3 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'sessions' ? 'border-blue-400 text-amber-400' : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-zinc-700'}`}
+            className={`px-6 py-3 border-b-2 flex items-center gap-2 transition-colors ${activeTab === 'sessions' ? 'border-blue-400 text-amber-400' : 'border-transparent text-text-muted hover:text-text-secondary hover:border-border-primary'}`}
           >
             <Server className="w-4 h-4" />
             Active Lab Containers ({sessions.length})
@@ -185,11 +185,11 @@ export function AdminDashboard() {
           </div>
         ) : (
           <>
-            <div className="bg-[#171717]/60 border border-[#262626]/80 rounded-xl overflow-hidden backdrop-blur-md">
+            <div className="bg-bg-panel/60 border border-border-primary/80 rounded-xl overflow-hidden backdrop-blur-md">
               {activeTab === 'users' ? (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#262626] bg-zinc-800/30 font-mono text-xs text-gray-400 uppercase tracking-wider">
+                    <tr className="border-b border-border-primary bg-bg-secondary/30 font-mono text-xs text-text-muted uppercase tracking-wider">
                       <th className="px-6 py-4 font-medium">Name</th>
                       <th className="px-6 py-4 font-medium">Email</th>
                       <th className="px-6 py-4 font-medium">Role</th>
@@ -197,39 +197,39 @@ export function AdminDashboard() {
                       <th className="px-6 py-4 font-medium">Joined</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm font-mono divide-y divide-zinc-800/50">
+                  <tbody className="text-sm font-mono divide-y divide-bg-secondary/50">
                     {users.map(u => (
-                      <tr key={u.uid} className="hover:bg-zinc-800/20 transition-colors">
-                        <td className="px-6 py-4 text-zinc-200">{u.name}</td>
-                        <td className="px-6 py-4 text-gray-400">{u.email}</td>
+                      <tr key={u.uid} className="hover:bg-bg-secondary/20 transition-colors">
+                        <td className="px-6 py-4 text-text-primary">{u.name}</td>
+                        <td className="px-6 py-4 text-text-muted">{u.email}</td>
                         <td className="px-6 py-4">
                           {u.isAdmin ? (
                             <span className="px-2 py-1 bg-blue-500/20 text-amber-400 rounded text-xs font-bold tracking-wide">ADMIN</span>
                           ) : (
-                            <span className="px-2 py-1 bg-zinc-800 text-gray-400 rounded text-xs tracking-wide">USER</span>
+                            <span className="px-2 py-1 bg-bg-secondary text-text-muted rounded text-xs tracking-wide">USER</span>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           {u.onboardingComplete ? (
                             <span className="text-blue-400 flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600" /> Yes</span>
                           ) : (
-                            <span className="text-gray-400 flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-zinc-600" /> No</span>
+                            <span className="text-text-muted flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-bg-secondary" /> No</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-gray-400">
+                        <td className="px-6 py-4 text-text-muted">
                           {new Date(u.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
                     ))}
                     {users.length === 0 && (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No users found.</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-text-muted">No users found.</td></tr>
                     )}
                   </tbody>
                 </table>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-[#262626] bg-zinc-800/30 font-mono text-xs text-gray-400 uppercase tracking-wider">
+                    <tr className="border-b border-border-primary bg-bg-secondary/30 font-mono text-xs text-text-muted uppercase tracking-wider">
                       <th className="px-6 py-4 font-medium">Container ID</th>
                       <th className="px-6 py-4 font-medium">User ID</th>
                       <th className="px-6 py-4 font-medium">Image</th>
@@ -237,33 +237,33 @@ export function AdminDashboard() {
                       <th className="px-6 py-4 font-medium">Created</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm font-mono divide-y divide-zinc-800/50">
+                  <tbody className="text-sm font-mono divide-y divide-bg-secondary/50">
                     {sessions.map(s => {
                       const user = users.find(u => u.uid === s.userId);
                       return (
-                        <tr key={s.id} className="hover:bg-zinc-800/20 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 flex items-center gap-2">
-                            <Terminal className="w-4 h-4 text-gray-400" />
+                        <tr key={s.id} className="hover:bg-bg-secondary/20 transition-colors">
+                          <td className="px-6 py-4 text-text-muted flex items-center gap-2">
+                            <Terminal className="w-4 h-4 text-text-muted" />
                             {s.id.substring(0, 12)}
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-zinc-200">{s.userId}</div>
+                            <div className="text-text-primary">{s.userId}</div>
                             {user && <div className="text-xs text-blue-500">{user.email}</div>}
                           </td>
-                          <td className="px-6 py-4 text-gray-400">{s.image}</td>
+                          <td className="px-6 py-4 text-text-muted">{s.image}</td>
                           <td className="px-6 py-4">
                             <span className={`px-2 py-1 rounded text-xs font-bold tracking-wide ${s.status === 'running' ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-500/20 text-amber-400'}`}>
                               {s.status.toUpperCase()}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-gray-400">
+                          <td className="px-6 py-4 text-text-muted">
                             {new Date(s.created).toLocaleString()}
                           </td>
                         </tr>
                       );
                     })}
                     {sessions.length === 0 && (
-                      <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No active container sessions found.</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-8 text-center text-text-muted">No active container sessions found.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -276,7 +276,7 @@ export function AdminDashboard() {
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="flex items-center gap-2 px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 border border-zinc-700 rounded font-mono text-sm transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-2 bg-bg-secondary hover:bg-border-primary text-text-secondary border border-border-primary rounded font-mono text-sm transition-colors disabled:opacity-50"
                 >
                   {loadingMore ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />

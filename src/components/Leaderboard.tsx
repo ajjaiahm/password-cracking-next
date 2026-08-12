@@ -114,20 +114,20 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-[#171717] border border-zinc-700 rounded-lg shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-2xl bg-bg-panel border border-border-primary rounded-lg shadow-2xl flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#262626] bg-black/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary bg-bg-secondary/60">
           <div className="flex items-center gap-3">
             <Trophy className="w-5 h-5 text-amber-400" />
             <div>
-              <h2 className="text-sm font-mono font-bold text-white uppercase tracking-wider">Leaderboard</h2>
-              <p className="text-[10px] text-gray-400 font-mono">
+              <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">Leaderboard</h2>
+              <p className="text-[10px] text-text-muted font-mono">
                 Top 25 operators · refreshes every 60s
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors">
             <XIcon className="w-5 h-5" />
           </button>
         </div>
@@ -136,10 +136,10 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-accent-blue border-t-transparent rounded-full animate-spin" />
             </div>
           ) : entries.length === 0 ? (
-            <div className="text-center py-12 text-gray-400 font-mono text-xs">
+            <div className="text-center py-12 text-text-muted font-mono text-xs">
               No operators found on the network.
             </div>
           ) : (
@@ -147,26 +147,26 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
               {entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between p-3 rounded bg-black/40 border border-[#262626] hover:border-zinc-700 transition-colors"
+                  className="flex items-center justify-between p-3 rounded bg-bg-secondary/40 border border-border-primary hover:border-zinc-700 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-8 h-8 rounded flex items-center justify-center font-bold font-mono text-xs
-                      ${entry.rank === 1 ? 'bg-amber-950/50 border border-blue-400/50 text-amber-400' :
-                        entry.rank === 2 ? 'bg-zinc-300/10 border border-zinc-300/30 text-gray-300' :
-                        entry.rank === 3 ? 'bg-orange-950/50 border border-orange-700/50 text-blue-400' :
-                        'bg-[#171717] border border-[#262626] text-gray-400'
+                      ${entry.rank === 1 ? 'bg-amber-950/50 border border-accent-blue/50 text-amber-400' :
+                        entry.rank === 2 ? 'bg-zinc-300/10 border border-zinc-300/30 text-text-secondary' :
+                        entry.rank === 3 ? 'bg-orange-950/50 border border-orange-700/50 text-accent-blue' :
+                        'bg-bg-card border border-border-primary text-text-muted'
                       }`}
                     >
                       #{entry.rank}
                     </div>
                     <div>
-                      <div className="font-mono text-xs text-zinc-200">{entry.name}</div>
-                      <div className="font-mono text-[10px] text-gray-400">
+                      <div className="font-mono text-xs text-text-primary">{entry.name}</div>
+                      <div className="font-mono text-[10px] text-text-muted">
                         ID: {entry.id.slice(0, 12)} | {entry.xp} XP
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 font-mono text-sm font-bold text-blue-400">
+                  <div className="flex items-center gap-1.5 font-mono text-sm font-bold text-accent-blue">
                     <Coins className="w-4 h-4" />
                     {entry.coins}
                   </div>

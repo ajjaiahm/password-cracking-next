@@ -2,27 +2,61 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install essential password cracking and networking tools
+# Enable universe repository (required for argon2, hashid, crunch, medusa, ncrack)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install all lab tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    # Core cracking tools
     hashcat \
     john \
     hydra \
+    medusa \
+    ncrack \
+    # Hashing utilities
+    argon2 \
+    apache2-utils \
+    libssl-dev \
+    # Hash identification
+    hashid \
+    # Wordlist generators
+    crunch \
+    # Packet capture & analysis
     tshark \
+    tcpdump \
+    # Network utilities
     nmap \
     curl \
     wget \
     ca-certificates \
     iproute2 \
     iputils-ping \
+    net-tools \
+    # Python & pip
+    python3 \
+    python3-pip \
+    python3-venv \
+    # System utilities
     sudo \
     nano \
+    file \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up an unprivileged 'operator' user with sudo access
+# Install Python-based tools via pip
+RUN pip3 install --no-cache-dir \
+    name-that-hash \
+    cupp
+
+# Set up an unprivileged 'operator' user with passwordless sudo
 RUN useradd -m -s /bin/bash -g operator operator && \
     echo "operator:operator" | chpasswd && \
-    adduser operator sudo
+    adduser operator sudo && \
+    echo "operator ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Set up mock files for the lab
 WORKDIR /home/operator

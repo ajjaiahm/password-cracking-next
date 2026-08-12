@@ -1,4 +1,4 @@
-export type SectionType = 'objective' | 'theory' | 'tool-intro' | 'command' | 'challenge' | 'quiz' | 'badge';
+export type SectionType = 'objective' | 'theory' | 'tool-intro' | 'command' | 'challenge' | 'quiz' | 'badge' | 'ollama-mcq' | 'ollama-descriptive';
 
 export interface CommandFlag {
   flag: string;
@@ -102,25 +102,9 @@ export const LAB_DATA: Track[] = [
             `
           },
           {
-            type: 'quiz',
-            title: 'Authentication Policy Review',
-            questions: [
-              {
-                question: 'Which of the following processes determines whether an operator has the rights to run packet captures on interface eth0?',
-                options: ['Authentication (AuthN)', 'Authorization (AuthZ)', 'Tokenization', 'Credential Stuffing'],
-                correct: 1
-              },
-              {
-                question: 'Why is a password like "P@ssw0rd1!" considered insecure by security auditors?',
-                options: [
-                  'It contains uppercase characters.',
-                  'Character substitution rules (e.g. @ for a) are preprogrammed into modern cracking tools.',
-                  'It uses too many special characters.',
-                  'It cannot be hashed by bcrypt.'
-                ],
-                correct: 1
-              }
-            ]
+            type: 'ollama-mcq',
+            title: 'Password Security Basics Assessment',
+            description: 'Assess understanding of authentication policies and password vulnerabilities.'
           },
           {
             type: 'badge',
@@ -220,12 +204,14 @@ export const LAB_DATA: Track[] = [
             outputExplanation: 'Argon2id took 0.145s (nearly 70 times longer than SHA-256) and consumed 4MB of RAM. This deliberate delay makes large-scale guessing attacks computationally unfeasible.'
           },
           {
-            type: 'challenge',
-            title: 'Hashing Verification Challenge',
-            description: 'Why do cryptographic hashing algorithms like Argon2id protect better against GPU cracking than SHA-256?',
-            acceptableAnswers: ['Memory-hardness', 'memory-hardness', 'Memory hardness', 'memory hardness'],
-            successMessage: 'Correct. Memory-hardness forces the cracking device to allocate specific RAM resources per guess, neutralizing GPU parallel cores.',
-            failureMessage: 'Incorrect. Think about the physical hardware constraints (CPU/RAM/GPU memory blocks).'
+            type: 'ollama-descriptive',
+            title: 'Hashing Verification Challenge 1',
+            description: 'Explain why cryptographic hashing algorithms like Argon2id protect better against GPU cracking than SHA-256.'
+          },
+          {
+            type: 'ollama-descriptive',
+            title: 'Hashing Verification Challenge 2',
+            description: 'Describe the concept of memory-hardness in the context of password hashing algorithms.'
           },
           {
             type: 'badge',
@@ -319,12 +305,9 @@ export const LAB_DATA: Track[] = [
             }
           },
           {
-            type: 'challenge',
+            type: 'ollama-mcq',
             title: 'Profiling Verification Check',
-            description: 'What Hashcat mode integer is mapped for NTLM hashes based on your analysis in Step 3?',
-            acceptableAnswers: ['1000'],
-            successMessage: 'Verification passed. Hashcat uses Mode 1000 for Windows NTLM hashes.',
-            failureMessage: 'Validation failed. Check the output of Step 3 for NTLM.'
+            description: 'Test understanding of Hashcat modes and hash profiling.'
           },
           {
             type: 'badge',
@@ -424,12 +407,9 @@ export const LAB_DATA: Track[] = [
             outputExplanation: 'Because the hash was already cracked in Step 5, John skipped it. (If you were cracking a harder hash like "dragon123", rules would append digits to the base word "dragon" to find it!)'
           },
           {
-            type: 'challenge',
-            title: 'Audit Challenge (Password Recovery)',
-            description: 'What was the exact plaintext password you recovered from the MD5 hash (b115458022b7dce0a805cc0d68dbb5eb) in Step 3?',
-            acceptableAnswers: ['dragon'],
-            successMessage: 'Correct! You successfully utilized an offline dictionary attack to retrieve the password.',
-            failureMessage: 'Incorrect password. Look closely at the output from Step 3 or Step 4 in your terminal.'
+            type: 'ollama-descriptive',
+            title: 'Offline Audit Challenge',
+            description: 'Explain the difference between a dictionary attack and an incremental brute-force attack.'
           },
           {
             type: 'badge',
@@ -529,12 +509,9 @@ export const LAB_DATA: Track[] = [
             outputExplanation: 'Ncrack matched the admin credentials.'
           },
           {
-            type: 'challenge',
+            type: 'ollama-mcq',
             title: 'Online Audit Challenge',
-            description: 'What was the plaintext password recovered by Hydra in Step 2 for the FTP server?',
-            acceptableAnswers: ['secret123'],
-            successMessage: 'Correct. You successfully retrieved the credential from the live service scanner output.',
-            failureMessage: 'Incorrect password. Look closely at the terminal output from Hydra in Step 2.'
+            description: 'Test understanding of online brute-forcing limitations and network constraints.'
           },
           {
             type: 'badge',
@@ -634,12 +611,9 @@ export const LAB_DATA: Track[] = [
             outputExplanation: 'TShark decodes the base64 authorization string (YWRtaW46c2VjcjN0X3BhJFM=) to reveal the credentials.'
           },
           {
-            type: 'challenge',
+            type: 'ollama-descriptive',
             title: 'PCAP Analysis Challenge',
-            description: 'Extract the plaintext password credentials from the POST request form parameters shown in Step 6.',
-            acceptableAnswers: ['secr3t_pa$$'],
-            successMessage: 'Verification passed. You extracted the password flag (secr3t_pa$$) from the HTTP POST form data.',
-            failureMessage: 'Validation failed. Check the password value next to "passwd=" in Step 6.'
+            description: 'Explain why extracting credentials from HTTP traffic is possible, and why it is not possible for HTTPS traffic.'
           },
           {
             type: 'badge',

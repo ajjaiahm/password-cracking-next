@@ -27,6 +27,7 @@ import {
   X as XIcon,
   Loader2
 } from 'lucide-react';
+import { OllamaSection } from './OllamaSection';
 
 // ── Assessment Question Type & Data ──
 interface AssessmentQuestion {
@@ -272,19 +273,19 @@ function AssessmentModal({
   const correctCount = questions.filter((q, i) => answers[i] === q.correct).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-2xl max-h-[85vh] bg-[#171717] border border-zinc-700 rounded-lg shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-primary/70 backdrop-blur-sm">
+      <div className="w-full max-w-2xl max-h-[85vh] bg-bg-panel border border-border-primary rounded-lg shadow-2xl flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#262626] bg-black/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-primary bg-bg-primary/60">
           <div className="flex items-center gap-3">
-            <ClipboardCheck className="w-5 h-5 text-gray-300" />
+            <ClipboardCheck className="w-5 h-5 text-accent-orange" />
             <div>
-              <h2 className="text-sm font-mono font-bold text-white uppercase tracking-wider">Module Assessment</h2>
-              <p className="text-[10px] text-gray-400 font-mono">Answer all questions to unlock module completion</p>
+              <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">Module Assessment</h2>
+              <p className="text-[10px] text-text-muted font-mono">Answer all questions to unlock module completion</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} className="text-text-muted hover:text-text-secondary transition-colors">
             <XIcon className="w-5 h-5" />
           </button>
         </div>
@@ -298,8 +299,8 @@ function AssessmentModal({
 
             return (
               <div key={qIdx} className="space-y-3">
-                <p className="text-xs font-mono font-bold text-zinc-200">
-                  <span className="text-gray-400 mr-2">[Q{qIdx + 1}/{questions.length}]</span>
+                <p className="text-sm font-mono font-bold text-text-primary">
+                  <span className="text-accent-orange mr-2">[Q{qIdx + 1}/{questions.length}]</span>
                   {q.question}
                 </p>
                 
@@ -309,14 +310,14 @@ function AssessmentModal({
                     
                     if (isRevealed) {
                       if (oIdx === q.correct) {
-                        btnClass += "bg-emerald-950/40 border-emerald-700/60 text-emerald-300 font-medium";
+                        btnClass += "dark:bg-emerald-950/40 bg-emerald-50 dark:border-emerald-700/60 border-emerald-300 dark:text-emerald-300 text-emerald-800 font-medium";
                       } else if (oIdx === userAnswer && oIdx !== q.correct) {
-                        btnClass += "bg-red-950/40 border-red-800/60 text-red-400";
+                        btnClass += "dark:bg-red-950/40 bg-red-50 dark:border-red-800/60 border-red-300 dark:text-red-400 text-red-700";
                       } else {
-                        btnClass += "bg-black/30 border-zinc-900 text-gray-400";
+                        btnClass += "bg-bg-primary/30 border-border-primary text-text-muted";
                       }
                     } else {
-                      btnClass += "bg-black/40 border-[#262626] text-gray-400 hover:border-zinc-600 hover:text-zinc-200 hover:bg-zinc-800/40 cursor-pointer";
+                      btnClass += "bg-bg-primary/40 border-border-primary text-text-muted hover:border-text-secondary hover:text-text-primary hover:bg-bg-secondary/40 cursor-pointer";
                     }
 
                     return (
@@ -326,7 +327,7 @@ function AssessmentModal({
                         onClick={() => handleAnswer(qIdx, oIdx)}
                         className={btnClass}
                       >
-                        <span className="text-gray-400 mr-2">{String.fromCharCode(65 + oIdx)}.</span>
+                        <span className="text-text-muted mr-2">{String.fromCharCode(65 + oIdx)}.</span>
                         {opt}
                       </button>
                     );
@@ -337,8 +338,8 @@ function AssessmentModal({
                 {isRevealed && (
                   <div className={`p-4 rounded border text-xs font-sans leading-relaxed mt-2 ${
                     isCorrect 
-                      ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-300/90' 
-                      : 'bg-amber-950/20 border-amber-900/40 text-amber-300/90'
+                      ? 'dark:bg-emerald-950/20 bg-emerald-50 dark:border-emerald-900/40 border-emerald-200 dark:text-emerald-300 text-emerald-800' 
+                      : 'dark:bg-amber-950/20 bg-amber-50 dark:border-amber-900/40 border-amber-200 dark:text-amber-300 text-amber-800'
                   }`}>
                     <div className="flex items-center gap-2 mb-2 font-mono font-bold text-[10px] uppercase tracking-wider">
                       {isCorrect ? (
@@ -356,14 +357,14 @@ function AssessmentModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#262626] bg-black/40 flex items-center justify-between">
-          <span className="text-[10px] font-mono text-gray-400">
+        <div className="px-6 py-4 border-t border-border-primary bg-bg-primary/40 flex items-center justify-between">
+          <span className="text-[10px] font-mono text-text-muted">
             {allAnswered ? `Score: ${correctCount}/${questions.length}` : `Answered: ${Object.keys(revealed).length}/${questions.length}`}
           </span>
           {allAnswered && (
             <button 
               onClick={onComplete}
-              className="bg-zinc-100 hover:bg-zinc-200 text-white text-xs font-bold px-6 py-2.5 rounded transition-colors font-mono uppercase tracking-wider"
+              className="bg-text-primary hover:bg-bg-secondary text-bg-primary text-xs font-bold px-6 py-2.5 rounded transition-colors font-mono uppercase tracking-wider"
             >
               Complete Assessment
             </button>
@@ -434,25 +435,25 @@ export function LabViewer({ showDailyChallenge, onCloseDailyChallenge }: { showD
 
   if (!activeLab) {
     return (
-      <div className="flex-1 h-full p-8 overflow-y-auto bg-black text-white custom-scrollbar">
+      <div className="flex-1 h-full p-8 overflow-y-auto bg-bg-primary text-text-primary custom-scrollbar">
         <div className="max-w-4xl mx-auto text-center mt-16 font-sans">
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 rounded border border-[#262626] flex items-center justify-center bg-[#171717]/60">
-              <Shield className="w-6 h-6 text-gray-400" />
+            <div className="w-12 h-12 rounded border border-border-primary flex items-center justify-center bg-bg-panel/60">
+              <Shield className="w-6 h-6 text-text-muted" />
             </div>
           </div>
-          <h1 className="text-xl font-mono font-bold mb-2 tracking-[0.2em] uppercase text-white">PASSWORD CRACKING LAB</h1>
-          <p className="text-xs font-mono text-gray-400 mb-12 uppercase tracking-wider">Educational Simulation Sandbox Environment</p>
+          <h1 className="text-xl font-mono font-bold mb-2 tracking-[0.2em] uppercase text-text-primary">PASSWORD CRACKING LAB</h1>
+          <p className="text-xs font-mono text-text-muted mb-12 uppercase tracking-wider">Educational Simulation Sandbox Environment</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
             {LAB_DATA.map(track => (
-              <div key={track.id} className="glass-card p-6 rounded hover:border-zinc-700 transition-colors">
+              <div key={track.id} className="glass-card p-6 rounded hover:border-border-primary transition-colors">
                 <div className="flex items-center justify-between mb-4">
                   {renderTrackIcon(track.icon)}
-                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Active</span>
+                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Active</span>
                 </div>
-                <h3 className="text-sm font-mono font-bold text-zinc-200 mb-2">{track.name}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{track.description}</p>
+                <h3 className="text-sm font-mono font-bold text-text-primary mb-2">{track.name}</h3>
+                <p className="text-xs text-text-muted leading-relaxed">{track.description}</p>
               </div>
             ))}
           </div>
@@ -565,7 +566,11 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
         if (!isSectionCompleted(activeLab.id, sectionIdx)) {
           await addXp(20, 'Challenge completed');
           await addCoins(20, 'Challenge completed');
+          completeSection(activeLab.id, sectionIdx);
         }
+        setTimeout(() => {
+          nextSection();
+        }, 1500);
       }
     } catch (err) {
       console.error(err);
@@ -615,6 +620,9 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
       }
       const event = new CustomEvent('mentor-message', { detail: { text: 'Audit verification complete: answers match system logs.', type: 'success' } });
       window.dispatchEvent(event);
+      setTimeout(() => {
+        nextSection();
+      }, 1500);
     } else {
       const event = new CustomEvent('mentor-message', { detail: { text: 'Audit verification failed. Please check validation logs.', type: 'error' } });
       window.dispatchEvent(event);
@@ -635,21 +643,21 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
   const isAssessmentDone = assessmentPassed[activeLab.id] || false;
 
   return (
-    <div className="flex-1 h-full p-6 md:p-10 overflow-y-auto bg-black text-white custom-scrollbar relative">
+    <div className="flex-1 h-full p-6 md:p-10 overflow-y-auto bg-bg-primary text-text-primary custom-scrollbar relative">
       <div className="max-w-3xl mx-auto pb-16">
         
         {/* Lab Info */}
-        <div className="mb-10 font-sans border-b border-zinc-900 pb-8">
+        <div className="mb-10 font-sans border-b border-border-primary pb-8">
           <div className="flex items-center gap-3 mb-4 text-[10px] font-mono">
-            <span className="px-2 py-0.5 border border-[#262626] bg-[#171717] rounded text-gray-400">MODULE</span>
+            <span className="px-2 py-0.5 border border-border-primary bg-bg-panel rounded text-text-muted">MODULE</span>
             <span className={`px-2 py-0.5 border rounded uppercase font-bold tracking-wider ${
-              activeLab.difficulty === 'beginner' ? 'border-[#262626] bg-[#171717] text-gray-400' :
-              activeLab.difficulty === 'intermediate' ? 'border-[#262626] bg-[#171717] text-gray-400' :
-              'border-[#262626] bg-[#171717] text-gray-400'
+              activeLab.difficulty === 'beginner' ? 'border-border-primary bg-bg-panel text-text-muted' :
+              activeLab.difficulty === 'intermediate' ? 'border-border-primary bg-bg-panel text-text-muted' :
+              'border-border-primary bg-bg-panel text-text-muted'
             }`}>{activeLab.difficulty}</span>
-            <span className="text-gray-400">+{activeLab.xp} XP</span>
+            <span className="text-text-muted">+{activeLab.xp} XP</span>
           </div>
-          <h1 className="text-xl md:text-2xl font-mono font-bold text-white mb-6">{activeLab.name}</h1>
+          <h1 className="text-xl md:text-2xl font-mono font-bold text-text-primary mb-6">{activeLab.name}</h1>
           
           {/* Progress Indicators */}
           <div className="flex gap-1.5">
@@ -659,8 +667,8 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                 onClick={() => jumpToSection(idx)}
                 className={`
                   flex-1 h-1 rounded-full cursor-pointer transition-all duration-300
-                  ${isSectionCompleted(activeLab.id, idx) ? 'bg-zinc-400' : 
-                    idx === currentSectionIndex ? 'bg-zinc-100' : 'bg-zinc-800'}
+                  ${isSectionCompleted(activeLab.id, idx) ? 'bg-text-secondary' : 
+                    idx === currentSectionIndex ? 'bg-text-primary' : 'bg-bg-secondary'}
                 `}
                 title={sec.title}
               />
@@ -682,41 +690,52 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                 key={idx} 
                 className={`
                   transition-all duration-200 rounded overflow-hidden border
-                  ${isActive ? 'border-zinc-700 bg-[#171717] shadow-lg' : 'border-zinc-900/60 bg-[#171717]/10 opacity-50'}
+                  ${isActive ? 'border-border-primary bg-bg-panel shadow-lg' : 'border-border-primary/60 bg-bg-panel/10 opacity-50'}
                 `}
               >
                 <div className="p-6">
                   {/* Title Bar */}
                   <div className="flex items-center gap-3 mb-6">
-                    <div className={`w-6 h-6 rounded flex items-center justify-center font-mono text-[10px] border ${isCompleted ? 'bg-zinc-100 border-zinc-200 text-zinc-950 font-bold' : 'border-[#262626] text-gray-400 bg-black/40'}`}>
+                    <div className={`w-6 h-6 rounded flex items-center justify-center font-mono text-[10px] border ${isCompleted ? 'bg-text-primary border-border-primary text-bg-primary font-bold' : 'border-border-primary text-text-muted bg-bg-primary/40'}`}>
                       {isCompleted ? '✓' : idx + 1}
                     </div>
-                    <h2 className="text-sm font-mono font-bold text-zinc-200 uppercase tracking-wider">
+                    <h2 className="text-sm font-mono font-bold text-text-primary uppercase tracking-wider">
                       {section.type === 'badge' ? 'Section Verification complete' : section.title}
                     </h2>
                   </div>
 
                   {/* Content by Type */}
                   {(section.type === 'objective' || section.type === 'theory' || section.type === 'tool-intro') && (
-                    <div className="text-xs font-sans text-gray-400 leading-relaxed prose prose-zinc prose-invert max-w-none prose-sm" dangerouslySetInnerHTML={{ __html: section.content || '' }} />
+                    <div className="text-sm font-sans text-text-secondary leading-relaxed prose prose-slate dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: section.content || '' }} />
                   )}
 
                   {section.type === 'command' && (
                     <div className="space-y-4">
-                      <div className="text-xs font-sans text-gray-400 leading-relaxed" dangerouslySetInnerHTML={{ __html: section.explanation || '' }} />
+                      <div className="text-sm font-sans text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: section.explanation || '' }} />
                       
-                      <div className="bg-black border border-[#262626]/80 rounded overflow-hidden">
-                        <div className="bg-[#171717]/40 px-4 py-2.5 flex justify-between items-center border-b border-[#262626]/80 font-mono text-[10px]">
-                          <span className="text-gray-400">Terminal Shell</span>
-                          <button 
-                            onClick={() => handleCopyCommand(section.command!)}
-                            className="text-[10px] bg-zinc-800 text-gray-300 px-2.5 py-1 rounded hover:bg-zinc-700 hover:text-white transition-colors font-mono"
-                          >
-                            Copy Command
-                          </button>
+                      <div className="bg-bg-primary border border-border-primary/80 rounded overflow-hidden">
+                        <div className="bg-bg-panel/40 px-4 py-2.5 flex justify-between items-center border-b border-border-primary/80 font-mono text-[10px]">
+                          <span className="text-text-muted">Terminal Shell</span>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleCopyCommand(section.command!)}
+                              className="text-[10px] bg-bg-secondary text-text-secondary px-2.5 py-1 rounded hover:bg-border-primary hover:text-text-primary transition-colors font-mono"
+                            >
+                              Copy
+                            </button>
+                            <button 
+                              onClick={() => {
+                                window.dispatchEvent(new CustomEvent('run-command', { detail: { command: section.command } }));
+                                toast.success('Command sent to terminal ↓');
+                              }}
+                              className="text-[10px] bg-accent-orange hover:bg-accent-hover text-white px-3 py-1 rounded transition-colors font-mono font-bold flex items-center gap-1"
+                            >
+                              ▶ Run
+                            </button>
+                          </div>
                         </div>
-                        <div className="p-4 font-mono text-xs text-zinc-200 bg-black break-all">
-                          <span className="text-gray-400">operator@console:~$</span> {section.command}
+                        <div className="p-4 font-mono text-xs text-text-primary bg-bg-primary break-all">
+                          <span className="text-accent-orange font-bold">operator@console:~$</span> {section.command}
                         </div>
                       </div>
 
@@ -746,20 +765,20 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                             a.click();
                             URL.revokeObjectURL(url);
                           }}
-                          className="flex items-center gap-2 bg-[#171717] border border-[#262626] text-gray-300 hover:text-white hover:bg-zinc-800 text-[11px] font-mono px-4 py-2 rounded transition-colors"
+                          className="flex items-center gap-2 bg-bg-panel border border-border-primary text-text-secondary hover:text-text-primary hover:bg-bg-secondary text-[11px] font-mono px-4 py-2 rounded transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" /> Download {section.fileToDownload.name}
                         </button>
                       )}
 
                       {section.flags && section.flags.length > 0 && (
-                        <div className="mt-4 bg-[#171717]/30 border border-zinc-850 rounded p-4">
-                          <h4 className="text-[10px] font-mono font-bold text-gray-400 mb-2.5 uppercase tracking-wider">Command Arguments Description</h4>
+                        <div className="mt-4 bg-bg-panel/30 border border-zinc-850 rounded p-4">
+                          <h4 className="text-[10px] font-mono font-bold text-text-secondary mb-2.5 uppercase tracking-wider">Command Arguments Description</h4>
                           <div className="space-y-2 font-mono text-[10px]">
                             {section.flags.map((f, i) => (
                               <div key={i} className="flex gap-4">
-                                <code className="text-gray-300 bg-[#171717] px-1.5 py-0.5 rounded border border-[#262626]">{f.flag}</code>
-                                <span className="text-gray-400 flex-1">{f.desc}</span>
+                                <code className="text-accent-orange bg-bg-panel px-1.5 py-0.5 rounded border border-border-primary">{f.flag}</code>
+                                <span className="text-text-secondary flex-1">{f.desc}</span>
                               </div>
                             ))}
                           </div>
@@ -770,10 +789,10 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
 
                   {section.type === 'challenge' && (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-gray-400 font-mono text-[10px] uppercase font-bold mb-2">
+                      <div className="flex items-center gap-2 text-text-muted font-mono text-[10px] uppercase font-bold mb-2">
                         <AlertCircle className="w-3.5 h-3.5" /> Validation Challenge
                       </div>
-                      <p className="text-xs font-sans text-gray-400 leading-relaxed">{section.description}</p>
+                      <p className="text-sm font-sans text-text-secondary leading-relaxed">{section.description}</p>
                       
                       <div className="flex gap-3">
                         <input 
@@ -782,20 +801,24 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                           value={challengeInputs[idx] || ''}
                           onChange={(e) => setChallengeInputs({ ...challengeInputs, [idx]: e.target.value })}
                           onKeyDown={(e) => e.key === 'Enter' && submitChallenge(idx, section)}
-                          className="flex-1 bg-black border border-[#262626] rounded px-3 py-2 text-xs text-white font-mono focus:border-zinc-700 outline-none disabled:opacity-50"
+                          className="flex-1 bg-bg-primary border border-border-primary rounded px-3 py-2 text-xs text-text-primary font-mono focus:border-border-primary outline-none disabled:opacity-50"
                           placeholder="Enter system signature/answer..."
                         />
                         <button 
                           disabled={challengeFeedback[idx]?.isCorrect || validatingChallenge[idx]}
                           onClick={() => submitChallenge(idx, section)}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-gray-300 hover:text-white border border-zinc-850 text-xs px-4 py-2 rounded font-mono transition-colors disabled:opacity-30 flex items-center justify-center min-w-[85px]"
+                          className="bg-bg-secondary hover:bg-border-primary text-text-secondary hover:text-text-primary border border-border-primary text-xs px-4 py-2 rounded font-mono transition-colors disabled:opacity-30 flex items-center justify-center min-w-[85px]"
                         >
                           {validatingChallenge[idx] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Verify'}
                         </button>
                       </div>
 
                       {challengeFeedback[idx] && (
-                        <div className={`p-3 rounded border text-xs font-mono ${challengeFeedback[idx].isCorrect ? 'bg-[#171717]/50 border-[#262626] text-gray-300' : 'bg-red-950/20 border-red-950/50 text-red-400'}`}>
+                        <div className={`p-3 rounded border text-xs font-mono ${
+                          challengeFeedback[idx].isCorrect 
+                            ? 'dark:bg-emerald-950/30 bg-emerald-50 dark:border-emerald-800/50 border-emerald-200 dark:text-emerald-300 text-emerald-800' 
+                            : 'dark:bg-red-950/20 bg-red-50 dark:border-red-950/50 border-red-200 dark:text-red-400 text-red-700'
+                        }`}>
                           {challengeFeedback[idx].text}
                         </div>
                       )}
@@ -820,8 +843,8 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                     <div className="space-y-6">
                       {section.questions?.map((q, qIdx) => (
                         <div key={qIdx} className="space-y-3">
-                          <p className="text-xs font-mono font-bold text-zinc-200">
-                            <span className="text-gray-400">[Q{qIdx + 1}]</span> {q.question}
+                          <p className="text-xs font-mono font-bold text-text-primary">
+                            <span className="text-text-muted">[Q{qIdx + 1}]</span> {q.question}
                           </p>
                           <div className="space-y-2">
                             {q.options.map((opt, oIdx) => {
@@ -831,14 +854,14 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                               
                               let btnClass = "w-full text-left px-4 py-2.5 text-xs rounded border font-mono transition-colors ";
                               if (isSubmitted) {
-                                if (isSelected && isCorrectAnswer) btnClass += "bg-emerald-950/30 border-emerald-800/50 text-emerald-300";
-                                else if (isSelected && !isCorrectAnswer) btnClass += "bg-red-950/20 border-red-900/50 text-red-400";
-                                else if (!isSelected && isCorrectAnswer) btnClass += "bg-[#171717] border-zinc-700 text-gray-300";
-                                else btnClass += "bg-black/20 border-zinc-900 text-gray-400";
+                                if (isSelected && isCorrectAnswer) btnClass += "dark:bg-emerald-950/30 bg-emerald-50 dark:border-emerald-800/50 border-emerald-300 dark:text-emerald-300 text-emerald-800";
+                                else if (isSelected && !isCorrectAnswer) btnClass += "dark:bg-red-950/20 bg-red-50 dark:border-red-900/50 border-red-300 dark:text-red-400 text-red-700";
+                                else if (!isSelected && isCorrectAnswer) btnClass += "bg-bg-panel border-border-primary text-text-muted";
+                                else btnClass += "bg-bg-primary/20 border-border-primary text-text-muted";
                               } else {
                                 btnClass += isSelected 
-                                  ? "bg-zinc-800 border-zinc-600 text-zinc-200 font-medium" 
-                                  : "bg-black/40 border-zinc-850 text-gray-400 hover:border-[#262626] hover:text-zinc-200";
+                                  ? "bg-bg-secondary border-text-secondary text-text-primary font-medium" 
+                                  : "bg-bg-primary/40 border-border-primary text-text-muted hover:border-border-primary hover:text-text-primary";
                               }
 
                               return (
@@ -862,7 +885,7 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                       {quizResults[idx] === undefined && (
                         <button 
                           onClick={() => submitQuiz(idx, section)}
-                          className="w-full bg-zinc-800 border border-zinc-750 text-gray-300 hover:text-white font-mono text-xs py-3 rounded hover:bg-zinc-750 transition-colors"
+                          className="w-full bg-bg-secondary border border-border-primary text-text-secondary hover:text-text-primary font-mono text-xs py-3 rounded hover:bg-border-primary transition-colors"
                         >
                           Submit Quiz Data
                         </button>
@@ -873,30 +896,40 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
                   {section.type === 'badge' && (
                     <div className="text-center py-6 font-mono">
                       <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 rounded border border-[#262626] bg-black flex items-center justify-center">
+                        <div className="w-16 h-16 rounded border border-border-primary bg-bg-primary flex items-center justify-center">
                           {renderBadgeIcon(section.badgeIcon || '')}
                         </div>
                       </div>
-                      <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-widest">MODULE CLEARED</h3>
-                      <p className="text-xs text-gray-400 max-w-sm mx-auto mb-6">{section.description}</p>
+                      <h3 className="text-sm font-bold text-text-primary mb-2 uppercase tracking-widest">MODULE CLEARED</h3>
+                      <p className="text-xs text-text-muted max-w-sm mx-auto mb-6">{section.description}</p>
                       
                       {/* Assessment gate — must pass before claiming badge */}
                       {labAssessment && !isAssessmentDone ? (
                         <button 
                           onClick={() => setShowAssessment(true)}
-                          className="bg-blue-600/80 hover:bg-blue-500/80 text-white text-xs font-bold px-6 py-2.5 rounded transition-colors flex items-center gap-2 mx-auto"
+                          className="bg-blue-600/80 hover:bg-blue-500/80 text-text-primary text-xs font-bold px-6 py-2.5 rounded transition-colors flex items-center gap-2 mx-auto"
                         >
                           <ClipboardCheck className="w-4 h-4" /> Take Assessment to Unlock
                         </button>
                       ) : (
                         <button 
                           onClick={handleClaimCredentials}
-                          className="bg-zinc-100 hover:bg-zinc-200 text-white text-xs font-bold px-6 py-2.5 rounded transition-colors"
+                          className="bg-text-primary hover:bg-bg-secondary text-bg-primary text-xs font-bold px-6 py-2.5 rounded transition-colors"
                         >
                           Claim Credentials & Continue
                         </button>
                       )}
                     </div>
+                  )}
+
+                  {(section.type === 'ollama-mcq' || section.type === 'ollama-descriptive') && (
+                    <OllamaSection 
+                      type={section.type as 'ollama-mcq' | 'ollama-descriptive'}
+                      topic={section.title}
+                      context={section.description}
+                      onComplete={() => nextSection()}
+                      sectionIdx={idx}
+                    />
                   )}
                 </div>
               </div>
@@ -910,16 +943,20 @@ Do not include any formatting other than the raw JSON string. Do not wrap in mar
             <button 
               onClick={prevSection}
               disabled={currentSectionIndex === 0}
-              className="px-4 py-2 border border-[#262626] text-gray-400 hover:text-zinc-200 rounded disabled:opacity-0 hover:bg-[#171717] transition-colors flex items-center gap-1"
+              className="px-4 py-2 border border-border-primary text-text-muted hover:text-text-primary rounded disabled:opacity-0 hover:bg-bg-panel transition-colors flex items-center gap-1"
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Prev
             </button>
             <button 
               onClick={nextSection}
+              disabled={
+                !isSectionCompleted(activeLab.id, currentSectionIndex) &&
+                ['command','challenge','quiz','ollama-mcq','ollama-descriptive'].includes(activeLab.sections[currentSectionIndex].type)
+              }
               className={`px-5 py-2.5 rounded border font-mono transition-colors flex items-center gap-1
-                ${isSectionCompleted(activeLab.id, currentSectionIndex) || !['command','challenge','quiz'].includes(activeLab.sections[currentSectionIndex].type)
-                  ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border-zinc-700'
-                  : 'bg-black border-zinc-900 text-gray-400 cursor-not-allowed'
+                ${isSectionCompleted(activeLab.id, currentSectionIndex) || !['command','challenge','quiz','ollama-mcq','ollama-descriptive'].includes(activeLab.sections[currentSectionIndex].type)
+                  ? 'bg-bg-secondary hover:bg-border-primary text-text-primary border-border-primary'
+                  : 'bg-bg-primary border-border-primary text-text-muted cursor-not-allowed opacity-50'
                 }
               `}
             >
